@@ -3,8 +3,8 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
-use crate::application::FileSystemPort;
-use crate::domain::{FileEntry, FileEntryKind, FileSystemError};
+use crate::domains::directory_browsing::application::FileSystemPort;
+use crate::domains::directory_browsing::domain::{FileEntry, FileEntryKind, FileSystemError};
 
 pub struct StdFileSystem;
 

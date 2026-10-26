@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::PlacesProviderPort;
-use crate::domain::Place;
+use crate::domains::places::domain::Place;
 
 pub struct ListPlaces {
     places_provider: Arc<dyn PlacesProviderPort>,
@@ -22,7 +22,7 @@ mod tests {
     use std::path::PathBuf;
 
     use super::*;
-    use crate::domain::PlaceKind;
+    use crate::domains::places::domain::PlaceKind;
 
     struct FakePlacesProvider;
 

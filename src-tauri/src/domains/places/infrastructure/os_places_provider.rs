@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use crate::application::PlacesProviderPort;
-use crate::domain::{Place, PlaceKind};
+use crate::domains::places::application::PlacesProviderPort;
+use crate::domains::places::domain::{Place, PlaceKind};
 
 pub struct OsPlacesProvider;
 

@@ -1,7 +1,11 @@
-use serde::Serialize;
+use std::path::PathBuf;
 
-use crate::domain::{
-    DirectoryListing, FileEntry, FileEntryKind, FileSystemError, Place, PlaceKind,
+use serde::Serialize;
+use tauri::State;
+
+use crate::domains::directory_browsing::application::ListDirectory;
+use crate::domains::directory_browsing::domain::{
+    DirectoryListing, FileEntry, FileEntryKind, FileSystemError,
 };
 
 #[derive(Serialize)]
@@ -55,33 +59,6 @@ impl From<DirectoryListing> for DirectoryListingDto {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct PlaceDto {
-    label: String,
-    path: String,
-    kind: &'static str,
-}
-
-impl From<Place> for PlaceDto {
-    fn from(place: Place) -> Self {
-        Self {
-            label: place.label,
-            path: place.path.to_string_lossy().into_owned(),
-            kind: match place.kind {
-                PlaceKind::Home => "home",
-                PlaceKind::Desktop => "desktop",
-                PlaceKind::Documents => "documents",
-                PlaceKind::Downloads => "downloads",
-                PlaceKind::Pictures => "pictures",
-                PlaceKind::Music => "music",
-                PlaceKind::Videos => "videos",
-                PlaceKind::Drive => "drive",
-            },
-        }
-    }
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CommandErrorDto {
     kind: &'static str,
     message: String,
@@ -99,4 +76,15 @@ impl From<FileSystemError> for CommandErrorDto {
             message: error.to_string(),
         }
     }
+}
+
+#[tauri::command]
+pub fn list_directory(
+    use_case: State<'_, ListDirectory>,
+    path: Option<String>,
+) -> Result<DirectoryListingDto, CommandErrorDto> {
+    use_case
+        .execute(path.map(PathBuf::from))
+        .map(Into::into)
+        .map_err(Into::into)
 }

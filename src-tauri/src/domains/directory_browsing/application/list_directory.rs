@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use super::FileSystemPort;
-use crate::domain::{DirectoryListing, FileSystemError};
+use crate::domains::directory_browsing::domain::{DirectoryListing, FileSystemError};
 
 pub struct ListDirectory {
     file_system: Arc<dyn FileSystemPort>,
@@ -40,7 +40,7 @@ mod tests {
     use std::path::Path;
 
     use super::*;
-    use crate::domain::{FileEntry, FileEntryKind};
+    use crate::domains::directory_browsing::domain::{FileEntry, FileEntryKind};
 
     struct FakeFileSystem {
         home: Option<PathBuf>,
