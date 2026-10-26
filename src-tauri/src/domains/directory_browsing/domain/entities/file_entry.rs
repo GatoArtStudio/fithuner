@@ -1,10 +1,6 @@
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FileEntryKind {
-    File,
-    Directory,
-}
+use crate::domains::directory_browsing::domain::FileEntryKind;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FileEntry {

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::PlacesProviderPort;
+use crate::domains::places::application::ports::{ListPlacesUseCase, PlacesProviderPort};
 use crate::domains::places::domain::Place;
 
 pub struct ListPlaces {
@@ -11,8 +11,10 @@ impl ListPlaces {
     pub fn new(places_provider: Arc<dyn PlacesProviderPort>) -> Self {
         Self { places_provider }
     }
+}
 
-    pub fn execute(&self) -> Vec<Place> {
+impl ListPlacesUseCase for ListPlaces {
+    fn execute(&self) -> Vec<Place> {
         self.places_provider.available_places()
     }
 }

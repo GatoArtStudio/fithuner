@@ -1,5 +1,5 @@
-mod list_directory;
 mod ports;
+mod use_cases;
 
-pub use list_directory::ListDirectory;
-pub use ports::FileSystemPort;
+pub use ports::{FileSystemPort, ListDirectoryUseCase};
+pub use use_cases::ListDirectory;

@@ -1,3 +1,5 @@
-mod place;
+mod entities;
+mod enums;
 
-pub use place::{Place, PlaceKind};
+pub use entities::Place;
+pub use enums::PlaceKind;

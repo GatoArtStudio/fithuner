@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use super::FileSystemPort;
+use crate::domains::directory_browsing::application::ports::{
+    FileSystemPort, ListDirectoryUseCase,
+};
 use crate::domains::directory_browsing::domain::{DirectoryListing, FileSystemError};
 
 pub struct ListDirectory {
@@ -12,8 +14,10 @@ impl ListDirectory {
     pub fn new(file_system: Arc<dyn FileSystemPort>) -> Self {
         Self { file_system }
     }
+}
 
-    pub fn execute(
+impl ListDirectoryUseCase for ListDirectory {
+    fn execute(
         &self,
         requested_path: Option<PathBuf>,
     ) -> Result<DirectoryListing, FileSystemError> {

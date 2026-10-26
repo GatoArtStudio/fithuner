@@ -1,7 +1,5 @@
 use serde::Serialize;
-use tauri::State;
 
-use crate::domains::places::application::ListPlaces;
 use crate::domains::places::domain::{Place, PlaceKind};
 
 #[derive(Serialize)]
@@ -29,9 +27,4 @@ impl From<Place> for PlaceDto {
             },
         }
     }
-}
-
-#[tauri::command]
-pub fn list_places(use_case: State<'_, ListPlaces>) -> Vec<PlaceDto> {
-    use_case.execute().into_iter().map(Into::into).collect()
 }

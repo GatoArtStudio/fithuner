@@ -1,9 +1,5 @@
-use std::path::PathBuf;
-
 use serde::Serialize;
-use tauri::State;
 
-use crate::domains::directory_browsing::application::ListDirectory;
 use crate::domains::directory_browsing::domain::{
     DirectoryListing, FileEntry, FileEntryKind, FileSystemError,
 };
@@ -76,15 +72,4 @@ impl From<FileSystemError> for CommandErrorDto {
             message: error.to_string(),
         }
     }
-}
-
-#[tauri::command]
-pub fn list_directory(
-    use_case: State<'_, ListDirectory>,
-    path: Option<String>,
-) -> Result<DirectoryListingDto, CommandErrorDto> {
-    use_case
-        .execute(path.map(PathBuf::from))
-        .map(Into::into)
-        .map_err(Into::into)
 }

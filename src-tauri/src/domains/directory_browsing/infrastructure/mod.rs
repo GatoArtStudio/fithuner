@@ -1,3 +1,3 @@
-mod std_file_system;
+mod adapters;
 
-pub use std_file_system::StdFileSystem;
+pub use adapters::StdFileSystem;

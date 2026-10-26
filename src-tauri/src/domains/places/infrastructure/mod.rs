@@ -1,3 +1,3 @@
-mod os_places_provider;
+mod adapters;
 
-pub use os_places_provider::OsPlacesProvider;
+pub use adapters::OsPlacesProvider;

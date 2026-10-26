@@ -1,2 +1,1 @@
-pub mod directory_browsing;
-pub mod places;
+pub mod tauri;

@@ -1,5 +1,5 @@
-mod list_places;
 mod ports;
+mod use_cases;
 
-pub use list_places::ListPlaces;
-pub use ports::PlacesProviderPort;
+pub use ports::{ListPlacesUseCase, PlacesProviderPort};
+pub use use_cases::ListPlaces;
