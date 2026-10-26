@@ -1,10 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(async (command: string) => {
+    if (command === "list_places") {
+      return [{ label: "Home", path: "/home/user", kind: "home" }];
+    }
+    return {
+      path: "/home/user",
+      parentPath: "/home",
+      entries: [
+        {
+          name: "notes.txt",
+          path: "/home/user/notes.txt",
+          kind: "file",
+          isSymlink: false,
+          isHidden: false,
+          sizeInBytes: 2048,
+          modifiedAtMillis: null,
+        },
+      ],
+    };
+  }),
+}));
+
 import { App } from "./App";
 
 describe("App", () => {
-  it("renders the application title", () => {
+  it("shows the places and the path of the starting folder", async () => {
     render(<App />);
-    expect(screen.getByRole("heading", { name: "Fithuner" })).toBeTruthy();
+
+    expect(await screen.findByRole("button", { name: "Home" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "user" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Name" })).toBeTruthy();
   });
 });
