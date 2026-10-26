@@ -11,6 +11,8 @@
   --color-selection: rgb(59 130 246 / 16%);
   --color-danger: #b42318;
   --color-danger-surface: #fef3f2;
+  --color-popover: #ffffff;
+  --shadow-popover: 0 8px 24px rgb(0 0 0 / 18%);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -40,5 +42,7 @@
     --color-selection: rgb(96 165 250 / 22%);
     --color-danger: #fda29b;
     --color-danger-surface: #3a1715;
+    --color-popover: #262a31;
+    --shadow-popover: 0 8px 24px rgb(0 0 0 / 50%);
   }
 }
