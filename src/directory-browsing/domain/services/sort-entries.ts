@@ -1,4 +1,4 @@
-import type { FileEntry } from "./file-entry";
+import type { FileEntry } from "../entities/file-entry";
 
 export type SortKey = "name" | "modified" | "size" | "type";
 export type SortDirection = "ascending" | "descending";

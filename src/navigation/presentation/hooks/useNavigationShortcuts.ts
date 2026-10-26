@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useDirectoryBrowsing } from "../../directory-browsing";
-import { useNavigation } from "./NavigationContext";
+import { useDirectoryBrowsing } from "../../../directory-browsing";
+import { useNavigation } from "../context/NavigationContext";
 
 export function useNavigationShortcuts() {
   const goBack = useNavigation((state) => state.goBack);

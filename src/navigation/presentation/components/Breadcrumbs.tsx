@@ -1,8 +1,8 @@
 import { Fragment } from "react";
-import { useDirectoryBrowsing } from "../../directory-browsing";
-import { Icon } from "../../shared/icons/Icon";
-import { buildBreadcrumbs } from "../domain/breadcrumbs";
-import { useNavigation } from "./NavigationContext";
+import { useDirectoryBrowsing } from "../../../directory-browsing";
+import { Icon } from "../../../shared/icons/Icon";
+import { buildBreadcrumbs } from "../../domain/services/breadcrumbs";
+import { useNavigation } from "../context/NavigationContext";
 import styles from "./Breadcrumbs.module.css";
 
 export function Breadcrumbs() {

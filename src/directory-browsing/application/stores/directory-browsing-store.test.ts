@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { DirectoryListing } from "../domain/file-entry";
+import type { DirectoryListing } from "../../domain/entities/file-entry";
 import { createDirectoryBrowsingStore } from "./directory-browsing-store";
-import type { DirectoryGateway } from "./directory-gateway";
+import type { DirectoryGateway } from "../ports/directory-gateway";
 
 function listingAt(path: string): DirectoryListing {
   return { path, parentPath: null, entries: [] };

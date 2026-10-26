@@ -1,7 +1,7 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
-import type { DirectoryError, DirectoryListing } from "../domain/file-entry";
-import { DEFAULT_SORT, type SortCriteria, type SortKey } from "../domain/sort-entries";
-import type { DirectoryGateway } from "./directory-gateway";
+import type { DirectoryError, DirectoryListing } from "../../domain/entities/file-entry";
+import { DEFAULT_SORT, type SortCriteria, type SortKey } from "../../domain/services/sort-entries";
+import type { DirectoryGateway } from "../ports/directory-gateway";
 
 export interface DirectoryBrowsingState {
   listing: DirectoryListing | null;

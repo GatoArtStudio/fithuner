@@ -1,7 +1,7 @@
-import { useDirectoryBrowsing } from "../../directory-browsing";
-import { Icon } from "../../shared/icons/Icon";
-import { selectCanGoBack, selectCanGoForward } from "../application/navigation-store";
-import { useNavigation } from "./NavigationContext";
+import { useDirectoryBrowsing } from "../../../directory-browsing";
+import { Icon } from "../../../shared/icons/Icon";
+import { selectCanGoBack, selectCanGoForward } from "../../application/stores/navigation-store";
+import { useNavigation } from "../context/NavigationContext";
 
 export function NavigationControls() {
   const canGoBack = useNavigation(selectCanGoBack);

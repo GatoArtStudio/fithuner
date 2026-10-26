@@ -8,9 +8,9 @@ import {
   stepForward,
   visit,
   type NavigationHistory,
-} from "../domain/navigation-history";
-import type { Place } from "../domain/place";
-import type { PlacesGateway } from "./places-gateway";
+} from "../../domain/value-objects/navigation-history";
+import type { Place } from "../../domain/entities/place";
+import type { PlacesGateway } from "../ports/places-gateway";
 
 export interface NavigationState {
   history: NavigationHistory;

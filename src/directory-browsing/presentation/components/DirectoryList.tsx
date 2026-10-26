@@ -1,15 +1,15 @@
 import { useMemo, useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Icon } from "../../shared/icons/Icon";
-import type { FileEntry } from "../domain/file-entry";
+import { Icon } from "../../../shared/icons/Icon";
+import type { FileEntry } from "../../domain/entities/file-entry";
 import {
   fileExtension,
   filterVisibleEntries,
   sortEntries,
   type SortKey,
-} from "../domain/sort-entries";
-import { useDirectoryBrowsing } from "./DirectoryBrowsingContext";
-import { formatFileSize, formatModifiedDate } from "./formatters";
+} from "../../domain/services/sort-entries";
+import { useDirectoryBrowsing } from "../context/DirectoryBrowsingContext";
+import { formatFileSize, formatModifiedDate } from "../formatters/formatters";
 import styles from "./DirectoryList.module.css";
 
 const ROW_HEIGHT = 34;

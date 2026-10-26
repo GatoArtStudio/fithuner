@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { useStore } from "zustand";
-import type { DirectoryBrowsingState, DirectoryBrowsingStore } from "../application/directory-browsing-store";
+import type { DirectoryBrowsingState, DirectoryBrowsingStore } from "../../application/stores/directory-browsing-store";
 
 const DirectoryBrowsingContext = createContext<DirectoryBrowsingStore | null>(null);
 

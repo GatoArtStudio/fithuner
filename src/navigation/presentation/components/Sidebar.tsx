@@ -1,6 +1,6 @@
-import { useDirectoryBrowsing } from "../../directory-browsing";
-import { Icon } from "../../shared/icons/Icon";
-import { useNavigation } from "./NavigationContext";
+import { useDirectoryBrowsing } from "../../../directory-browsing";
+import { Icon } from "../../../shared/icons/Icon";
+import { useNavigation } from "../context/NavigationContext";
 import styles from "./Sidebar.module.css";
 
 export function Sidebar() {

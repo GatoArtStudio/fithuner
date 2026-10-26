@@ -1,5 +1,5 @@
-import { filterVisibleEntries } from "../domain/sort-entries";
-import { useDirectoryBrowsing } from "./DirectoryBrowsingContext";
+import { filterVisibleEntries } from "../../domain/services/sort-entries";
+import { useDirectoryBrowsing } from "../context/DirectoryBrowsingContext";
 import styles from "./FolderStatusBar.module.css";
 
 export function FolderStatusBar() {

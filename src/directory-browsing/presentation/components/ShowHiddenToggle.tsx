@@ -1,5 +1,5 @@
-import { Icon } from "../../shared/icons/Icon";
-import { useDirectoryBrowsing } from "./DirectoryBrowsingContext";
+import { Icon } from "../../../shared/icons/Icon";
+import { useDirectoryBrowsing } from "../context/DirectoryBrowsingContext";
 
 export function ShowHiddenToggle() {
   const showHidden = useDirectoryBrowsing((state) => state.showHidden);

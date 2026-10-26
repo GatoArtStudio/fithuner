@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { currentPath } from "../domain/navigation-history";
+import { currentPath } from "../../domain/value-objects/navigation-history";
 import { createNavigationStore } from "./navigation-store";
 
 function createStoreWith(openDirectory: (path?: string) => Promise<string | null>) {

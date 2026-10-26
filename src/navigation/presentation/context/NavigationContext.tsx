@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { useStore } from "zustand";
-import type { NavigationState, NavigationStore } from "../application/navigation-store";
+import type { NavigationState, NavigationStore } from "../../application/stores/navigation-store";
 
 const NavigationContext = createContext<NavigationStore | null>(null);
 

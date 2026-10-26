@@ -1,4 +1,4 @@
-import type { DirectoryListing } from "../domain/file-entry";
+import type { DirectoryListing } from "../../domain/entities/file-entry";
 
 export interface DirectoryGateway {
   listDirectory(path?: string): Promise<DirectoryListing>;

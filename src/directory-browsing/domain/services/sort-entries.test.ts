@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { FileEntry } from "./file-entry";
+import type { FileEntry } from "../entities/file-entry";
 import { filterVisibleEntries, sortEntries } from "./sort-entries";
 
 function entry(overrides: Partial<FileEntry> & { name: string }): FileEntry {
