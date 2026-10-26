@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 
 use crate::domains::file_operations::application::ports::{FileOpenerPort, OpenEntryUseCase};
@@ -22,6 +22,8 @@ impl OpenEntryUseCase for OpenEntry {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
     use crate::domains::file_operations::application::use_cases::fake_ports::InMemoryEntries;
 
