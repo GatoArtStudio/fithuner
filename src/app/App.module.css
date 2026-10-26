@@ -1,10 +1,25 @@
 .shell {
   display: grid;
-  place-items: center;
+  grid-template-columns: 220px 1fr;
   height: 100vh;
 }
 
-.title {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
 }
