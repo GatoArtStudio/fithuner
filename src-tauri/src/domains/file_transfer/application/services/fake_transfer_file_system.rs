@@ -64,16 +64,6 @@ impl FakeTransferFileSystem {
             _ => None,
         }
     }
-
-    pub fn paths_under(&self, prefix: &str) -> Vec<String> {
-        self.nodes
-            .lock()
-            .unwrap()
-            .keys()
-            .filter(|path| path.starts_with(prefix) && *path != Path::new(prefix))
-            .map(|path| path.to_string_lossy().into_owned())
-            .collect()
-    }
 }
 
 impl TransferFileSystemPort for FakeTransferFileSystem {

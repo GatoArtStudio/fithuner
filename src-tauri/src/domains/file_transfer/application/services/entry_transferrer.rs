@@ -85,10 +85,9 @@ impl<'a> EntryTransferrer<'a> {
         if self.mode == TransferMode::Move
             && transferred_everything
             && !self.cancellation.is_cancelled()
+            && let Err(error) = self.file_system.remove_entry(source)
         {
-            if let Err(error) = self.file_system.remove_entry(source) {
-                self.record_failure(source, error);
-            }
+            self.record_failure(source, error);
         }
     }
 
