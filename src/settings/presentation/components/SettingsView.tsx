@@ -1,0 +1,77 @@
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
+import { Icon } from "../../../shared/icons/Icon";
+import type { SettingsSection } from "../../domain/entities/app-settings";
+import { useSettings } from "../context/SettingsContext";
+import { AppearanceSection } from "./sections/AppearanceSection";
+import { GeneralSection } from "./sections/GeneralSection";
+import { PreviewSection } from "./sections/PreviewSection";
+import styles from "./SettingsView.module.css";
+
+const SECTIONS: { id: SettingsSection; label: string }[] = [
+  { id: "general", label: "General" },
+  { id: "appearance", label: "Appearance" },
+  { id: "preview", label: "Preview" },
+];
+
+export interface ExtraSettingsSection {
+  id: SettingsSection;
+  label: string;
+  content: ReactNode;
+}
+
+interface SettingsViewProps {
+  extraSections?: ExtraSettingsSection[];
+}
+
+export function SettingsView({ extraSections = [] }: SettingsViewProps) {
+  const activeSection = useSettings((state) => state.activeSection);
+  const selectSection = useSettings((state) => state.selectSection);
+  const closeSettings = useSettings((state) => state.closeSettings);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      closeSettings();
+    }
+  }
+
+  const sections = [...SECTIONS, ...extraSections.map(({ id, label }) => ({ id, label }))];
+  const activeExtraSection = extraSections.find((section) => section.id === activeSection);
+  const activeLabel = sections.find((section) => section.id === activeSection)?.label;
+
+  return (
+    <div className={styles.view} onKeyDown={handleKeyDown}>
+      <nav className={styles.nav} aria-label="Settings sections">
+        <button type="button" className={styles.back} onClick={closeSettings}>
+          <Icon name="back" />
+          <span>Back</span>
+        </button>
+        {sections.map((section) => (
+          <button
+            key={section.id}
+            type="button"
+            className={styles.sectionButton}
+            aria-current={section.id === activeSection ? "page" : undefined}
+            onClick={() => selectSection(section.id)}
+          >
+            {section.label}
+          </button>
+        ))}
+      </nav>
+      <main className={styles.content}>
+        <h1 ref={headingRef} tabIndex={-1} className={styles.heading}>
+          {activeLabel}
+        </h1>
+        {activeSection === "general" && <GeneralSection />}
+        {activeSection === "appearance" && <AppearanceSection />}
+        {activeSection === "preview" && <PreviewSection />}
+        {activeExtraSection?.content}
+      </main>
+    </div>
+  );
+}

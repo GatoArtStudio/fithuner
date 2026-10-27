@@ -1,0 +1,53 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 40%);
+}
+
+.dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-popover);
+  box-shadow: var(--shadow-popover);
+}
+
+.title {
+  margin: 0 0 var(--space-2);
+  font-size: 16px;
+}
+
+.message {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.button {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.danger {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-background);
+}

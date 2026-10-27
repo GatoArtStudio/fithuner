@@ -1,0 +1,28 @@
+.splitter {
+  position: absolute;
+  z-index: 5;
+  background: transparent;
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+
+.splitter:hover,
+.splitter:focus-visible,
+.splitter:active {
+  background: var(--color-accent);
+}
+
+.vertical {
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 6px;
+  cursor: col-resize;
+}
+
+.horizontal {
+  top: -3px;
+  right: 0;
+  left: 0;
+  height: 6px;
+  cursor: row-resize;
+}

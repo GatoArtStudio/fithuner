@@ -1,0 +1,13 @@
+.banner {
+  position: fixed;
+  top: var(--space-4);
+  left: 50%;
+  z-index: 35;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: #fff;
+  box-shadow: var(--shadow-popover);
+  transform: translateX(-50%);
+  pointer-events: none;
+}

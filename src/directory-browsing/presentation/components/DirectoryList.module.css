@@ -1,0 +1,152 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  container-type: inline-size;
+}
+
+.header,
+.row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 170px 110px 90px;
+  align-items: center;
+  column-gap: var(--space-3);
+  padding: 0 var(--space-4);
+}
+
+.header {
+  border-bottom: 1px solid var(--color-border);
+  height: 32px;
+  flex-shrink: 0;
+}
+
+@container (max-width: 640px) {
+  .header,
+  .row {
+    grid-template-columns: minmax(140px, 1fr) 170px;
+  }
+
+  .header > :nth-child(n + 3),
+  .row > :nth-child(n + 3) {
+    display: none;
+  }
+}
+
+@container (max-width: 400px) {
+  .header,
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .header > :nth-child(n + 2),
+  .row > :nth-child(n + 2) {
+    display: none;
+  }
+}
+
+.headerCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.headerCell:hover {
+  color: var(--color-text);
+}
+
+.scrollArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  outline: none;
+}
+
+.rows {
+  position: relative;
+  width: 100%;
+}
+
+.row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  cursor: default;
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+
+.row:hover {
+  background: var(--color-hover);
+}
+
+.selected {
+  background: var(--color-selection);
+}
+
+.selected:hover {
+  background: var(--color-selection);
+}
+
+.hidden {
+  opacity: 0.55;
+}
+
+.dimmed {
+  opacity: 0.45;
+}
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folderIcon {
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+
+.fileIcon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.secondaryCell {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emptyState {
+  margin: var(--space-4) 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.errorBanner {
+  margin: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
+}

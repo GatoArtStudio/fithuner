@@ -1,0 +1,41 @@
+.summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.icon {
+  color: var(--color-accent);
+}
+
+.facts {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-width: 200px;
+}
+
+.facts dt {
+  color: var(--color-text-muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.caption,
+.partial {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-align: center;
+}

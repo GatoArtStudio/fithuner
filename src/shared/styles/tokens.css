@@ -1,0 +1,83 @@
+:root {
+  color-scheme: light dark;
+
+  --color-background: #ffffff;
+  --color-surface: #f5f6f8;
+  --color-text: #1b1d21;
+  --color-text-muted: #6b7280;
+  --color-accent: #3b82f6;
+  --color-border: #e3e5e8;
+  --color-hover: rgb(0 0 0 / 5%);
+  --color-selection: rgb(59 130 246 / 16%);
+  --color-danger: #b42318;
+  --color-danger-surface: #fef3f2;
+  --color-popover: #ffffff;
+  --shadow-popover: 0 8px 24px rgb(0 0 0 / 18%);
+  --syntax-keyword: #8f3fb8;
+  --syntax-string: #1a7f37;
+  --syntax-number: #b35900;
+  --syntax-function: #0b62d6;
+  --syntax-variable: #a3314b;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+
+  --font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-size-md: 14px;
+  --font-size-xl: 28px;
+
+  --motion-fast: 120ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-background: #16181c;
+    --color-surface: #1e2126;
+    --color-text: #e8eaed;
+    --color-text-muted: #9aa0a8;
+    --color-accent: #60a5fa;
+    --color-border: #2b2f36;
+    --color-hover: rgb(255 255 255 / 6%);
+    --color-selection: rgb(96 165 250 / 22%);
+    --color-danger: #fda29b;
+    --color-danger-surface: #3a1715;
+    --color-popover: #262a31;
+    --shadow-popover: 0 8px 24px rgb(0 0 0 / 50%);
+    --syntax-keyword: #d2a8ff;
+    --syntax-string: #7ee787;
+    --syntax-number: #ffa657;
+    --syntax-function: #79c0ff;
+    --syntax-variable: #ff7b9c;
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-background: #16181c;
+  --color-surface: #1e2126;
+  --color-text: #e8eaed;
+  --color-text-muted: #9aa0a8;
+  --color-accent: #60a5fa;
+  --color-border: #2b2f36;
+  --color-hover: rgb(255 255 255 / 6%);
+  --color-selection: rgb(96 165 250 / 22%);
+  --color-danger: #fda29b;
+  --color-danger-surface: #3a1715;
+  --color-popover: #262a31;
+  --shadow-popover: 0 8px 24px rgb(0 0 0 / 50%);
+  --syntax-keyword: #d2a8ff;
+  --syntax-string: #7ee787;
+  --syntax-number: #ffa657;
+  --syntax-function: #79c0ff;
+  --syntax-variable: #ff7b9c;
+}
