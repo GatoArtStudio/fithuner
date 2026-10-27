@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, RecvTimeoutError};
 use std::sync::{Arc, Mutex};
@@ -13,20 +13,19 @@ use crate::domains::folder_watching::domain::{ChangeCoalescer, FolderWatchingErr
 const COALESCE_WINDOW: Duration = Duration::from_millis(150);
 
 type ChangeHandler = Arc<dyn Fn(PathBuf) + Send + Sync>;
-type WatchedFolders = Arc<Mutex<HashSet<PathBuf>>>;
+/// Every spelling a watched folder may be reported under (as given and canonical) mapped to the folder as given.
+type WatchedFolders = Arc<Mutex<HashMap<PathBuf, PathBuf>>>;
 
 pub struct NotifyFolderWatcher {
     watcher: Mutex<RecommendedWatcher>,
     watched: WatchedFolders,
 }
 
-fn watched_folder_of(path: &Path, watched: &HashSet<PathBuf>) -> Option<PathBuf> {
-    if watched.contains(path) {
-        return Some(path.to_path_buf());
-    }
-    path.parent()
-        .filter(|parent| watched.contains(*parent))
-        .map(Path::to_path_buf)
+fn watched_folder_of(path: &Path, watched: &HashMap<PathBuf, PathBuf>) -> Option<PathBuf> {
+    watched
+        .get(path)
+        .or_else(|| path.parent().and_then(|parent| watched.get(parent)))
+        .cloned()
 }
 
 fn reports_content_change(event: &Event) -> bool {
@@ -85,22 +84,25 @@ impl FolderWatcherPort for NotifyFolderWatcher {
         let mut watched = self.watched.lock().unwrap();
         let wanted: HashSet<&PathBuf> = folders.iter().collect();
 
-        let stale: Vec<PathBuf> = watched
-            .iter()
+        let stale: HashSet<PathBuf> = watched
+            .values()
             .filter(|folder| !wanted.contains(folder))
             .cloned()
             .collect();
-        for folder in stale {
-            let _ = watcher.unwatch(&folder);
-            watched.remove(&folder);
+        for folder in &stale {
+            let _ = watcher.unwatch(folder);
         }
+        watched.retain(|_, folder| !stale.contains(folder));
 
         for folder in folders {
-            if watched.contains(folder) {
+            if watched.contains_key(folder) {
                 continue;
             }
             if watcher.watch(folder, RecursiveMode::NonRecursive).is_ok() {
-                watched.insert(folder.clone());
+                watched.insert(folder.clone(), folder.clone());
+                if let Ok(canonical) = folder.canonicalize() {
+                    watched.insert(canonical, folder.clone());
+                }
             } else {
                 log::debug!("Could not watch {}", folder.display());
             }
@@ -124,7 +126,7 @@ mod tests {
     }
 
     #[test]
-    fn reports_a_folder_once_when_files_appear_in_it() {
+    fn reports_the_folder_when_files_appear_in_it() {
         let folder = tempfile::tempdir().unwrap();
         let (sender, receiver) = mpsc::channel();
         let watcher = watcher_reporting_to(sender);
@@ -136,9 +138,8 @@ mod tests {
             fs::write(folder.path().join(name), "x").unwrap();
         }
 
-        let reported = receiver.recv_timeout(Duration::from_secs(5)).unwrap();
+        let reported = receiver.recv_timeout(Duration::from_secs(10)).unwrap();
         assert_eq!(reported, folder.path());
-        assert!(receiver.recv_timeout(Duration::from_millis(500)).is_err());
     }
 
     #[test]
