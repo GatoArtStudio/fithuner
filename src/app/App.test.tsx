@@ -3,6 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(async (command: string) => {
+    if (command === "check_for_update") {
+      return { currentVersion: "0.1.0", available: null };
+    }
     if (command === "load_settings") {
       return {
         appearance: { theme: "system" },

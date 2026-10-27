@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { UpdateBadge, UpdatesProvider, UpdatesSection, useUpdates } from "../app-updates";
 import {
   PreviewPanel,
   PreviewProvider,
@@ -77,6 +78,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   const isDialogOpen = useFileOperations((state) => state.pendingDeletion !== null);
   const renderClipboardMenuItems = useClipboardMenuItems();
   const loadSettings = useSettings((state) => state.load);
+  const runStartupCheck = useUpdates((state) => state.runStartupCheck);
   const isSettingsOpen = useSettings((state) => state.isOpen);
   useApplyTheme();
   useSettingsShortcut();
@@ -116,8 +118,8 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   }, [connectBackendEvents]);
 
   useEffect(() => {
-    void loadSettings();
-  }, [loadSettings]);
+    void loadSettings().then(runStartupCheck);
+  }, [loadSettings, runStartupCheck]);
 
   useEffect(() => {
     void loadPlaces();
@@ -138,7 +140,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   return (
     <>
       <div className={styles.shell} hidden={isSettingsOpen}>
-        <Sidebar footer={<SettingsButton />} />
+        <Sidebar footer={<SettingsButton adornment={<UpdateBadge />} />} />
         <main className={styles.main}>
           <header className={styles.toolbar}>
             <NavigationControls />
@@ -178,7 +180,11 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
           <FolderStatusBar />
         </main>
       </div>
-      {isSettingsOpen && <SettingsView />}
+      {isSettingsOpen && (
+        <SettingsView
+          extraSections={[{ id: "updates", label: "Updates", content: <UpdatesSection /> }]}
+        />
+      )}
       <EntryContextMenu renderExtraItems={renderClipboardMenuItems} />
       <DeleteConfirmationDialog />
       <ConflictDialog />
@@ -201,6 +207,7 @@ export function App() {
   return (
     <ToastProvider store={application.toastStore}>
       <SettingsProvider store={application.settingsStore}>
+      <UpdatesProvider store={application.updatesStore}>
       <PreviewProvider store={application.previewStore} gateway={application.previewGateway}>
       <DirectoryBrowsingProvider store={application.directoryBrowsingStore}>
         <NavigationProvider store={application.navigationStore}>
@@ -216,6 +223,7 @@ export function App() {
         </NavigationProvider>
       </DirectoryBrowsingProvider>
       </PreviewProvider>
+      </UpdatesProvider>
       </SettingsProvider>
     </ToastProvider>
   );

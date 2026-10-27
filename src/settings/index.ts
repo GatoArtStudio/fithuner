@@ -14,3 +14,4 @@ export { SettingsButton } from "./presentation/components/SettingsButton";
 export { SettingsView } from "./presentation/components/SettingsView";
 export type { ExtraSettingsSection } from "./presentation/components/SettingsView";
 export { useSettingsShortcut } from "./presentation/hooks/useSettingsShortcut";
+export { SettingToggle as SettingToggleControl } from "./presentation/components/SettingToggle";
