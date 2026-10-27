@@ -20,7 +20,7 @@ const PROVIDERS: {
   hasSizeLimit: boolean;
 }[] = [
   { key: "image", label: "Images", description: "PNG, JPG, GIF, WebP, SVG, BMP, ICO and AVIF.", hasSizeLimit: true },
-  { key: "text", label: "Text and code", description: "Plain text and source code with syntax highlighting.", hasSizeLimit: true },
+  { key: "text", label: "Text and code", description: "Plain text and source code with syntax highlighting. Larger files are cut at the size limit.", hasSizeLimit: true },
   { key: "markdown", label: "Markdown", description: "Rendered Markdown documents.", hasSizeLimit: true },
   { key: "json", label: "JSON", description: "Collapsible JSON tree.", hasSizeLimit: true },
   { key: "csv", label: "CSV and TSV", description: "Tables from delimited text files.", hasSizeLimit: true },
