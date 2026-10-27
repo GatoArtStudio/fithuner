@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+use super::preview_settings_dto::PreviewSettingsDto;
 use crate::domains::settings::domain::{
-    AppSettings, AppearanceSettings, BrowsingSettings, SettingsError, ThemePreference,
+    AppSettings, AppearanceSettings, BrowsingSettings, ThemePreference,
 };
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -30,6 +31,7 @@ pub struct BrowsingSettingsDto {
 pub struct SettingsDto {
     appearance: AppearanceSettingsDto,
     browsing: BrowsingSettingsDto,
+    preview: PreviewSettingsDto,
 }
 
 impl From<AppSettings> for SettingsDto {
@@ -46,6 +48,7 @@ impl From<AppSettings> for SettingsDto {
                 show_hidden_files: settings.browsing.show_hidden_files,
                 confirm_before_trash: settings.browsing.confirm_before_trash,
             },
+            preview: settings.preview.into(),
         }
     }
 }
@@ -64,25 +67,7 @@ impl From<SettingsDto> for AppSettings {
                 show_hidden_files: dto.browsing.show_hidden_files,
                 confirm_before_trash: dto.browsing.confirm_before_trash,
             },
-        }
-    }
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SettingsErrorDto {
-    kind: &'static str,
-    message: String,
-}
-
-impl From<SettingsError> for SettingsErrorDto {
-    fn from(error: SettingsError) -> Self {
-        Self {
-            kind: match error {
-                SettingsError::Unavailable(_) => "unavailable",
-                SettingsError::Corrupted(_) => "corrupted",
-            },
-            message: error.to_string(),
+            preview: dto.preview.into(),
         }
     }
 }
