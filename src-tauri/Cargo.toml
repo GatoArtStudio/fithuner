@@ -1,6 +1,6 @@
 [package]
 name = "fithuner"
-version = "0.1.1"
+version = "0.2.0"
 description = "Cross-platform file explorer focused on UI and UX"
 authors = ["GatoArtStudio"]
 license = "MIT"
@@ -29,6 +29,8 @@ clipboard-rs = { version = "0.3.5", default-features = false, features = ["wayla
 env_logger = "0.11.11"
 tauri-plugin-updater = "2"
 log = "0.4.34"
+unicode-normalization = "0.1.26"
+notify = "8"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

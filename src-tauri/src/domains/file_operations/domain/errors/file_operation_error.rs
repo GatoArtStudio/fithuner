@@ -5,6 +5,9 @@ pub enum FileOperationError {
     AlreadyExists,
     NotFound,
     PermissionDenied,
+    /// Only raised on systems whose trash cannot restore items.
+    #[allow(dead_code)]
+    Unsupported(String),
     InvalidName(String),
     Unexpected(String),
 }
@@ -15,6 +18,7 @@ impl fmt::Display for FileOperationError {
             Self::AlreadyExists => write!(formatter, "An item with that name already exists"),
             Self::NotFound => write!(formatter, "The item does not exist"),
             Self::PermissionDenied => write!(formatter, "Permission denied"),
+            Self::Unsupported(reason) => write!(formatter, "{reason}"),
             Self::InvalidName(reason) => write!(formatter, "Invalid name: {reason}"),
             Self::Unexpected(reason) => write!(formatter, "Unexpected error: {reason}"),
         }

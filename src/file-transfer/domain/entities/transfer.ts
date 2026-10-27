@@ -41,12 +41,18 @@ export interface FailedTransfer {
   message: string;
 }
 
+export interface TransferredEntry {
+  from: string;
+  to: string;
+}
+
 export interface TransferFinished {
   transferId: string;
   transferredFiles: number;
   skipped: string[];
   failed: FailedTransfer[];
   cancelled: boolean;
+  transferred: TransferredEntry[];
   error: string | null;
 }
 

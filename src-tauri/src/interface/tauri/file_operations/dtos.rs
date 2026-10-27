@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::domains::file_operations::domain::{BatchOutcome, FileOperationError, NewEntryKind};
+use crate::domains::file_operations::domain::{
+    BatchOutcome, EntryMove, FileOperationError, NewEntryKind,
+};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -16,6 +18,22 @@ impl From<NewEntryKindDto> for NewEntryKind {
         match kind {
             NewEntryKindDto::File => NewEntryKind::File,
             NewEntryKindDto::Directory => NewEntryKind::Directory,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EntryMoveDto {
+    from: String,
+    to: String,
+}
+
+impl From<EntryMoveDto> for EntryMove {
+    fn from(dto: EntryMoveDto) -> Self {
+        Self {
+            from: PathBuf::from(dto.from),
+            to: PathBuf::from(dto.to),
         }
     }
 }
@@ -34,6 +52,7 @@ impl From<FileOperationError> for FileOperationErrorDto {
                 FileOperationError::AlreadyExists => "alreadyExists",
                 FileOperationError::NotFound => "notFound",
                 FileOperationError::PermissionDenied => "permissionDenied",
+                FileOperationError::Unsupported(_) => "unsupported",
                 FileOperationError::InvalidName(_) => "invalidName",
                 FileOperationError::Unexpected(_) => "unexpected",
             },

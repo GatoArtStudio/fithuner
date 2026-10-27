@@ -4,6 +4,7 @@ export type FileOperationErrorKind =
   | "alreadyExists"
   | "notFound"
   | "permissionDenied"
+  | "unsupported"
   | "invalidName"
   | "unexpected";
 
@@ -21,6 +22,16 @@ export interface BatchOutcome {
   succeeded: string[];
   failed: FailedEntry[];
 }
+
+export interface EntryMove {
+  from: string;
+  to: string;
+}
+
+export type FileOperationEvent =
+  | { type: "renamed"; from: string; to: string }
+  | { type: "created"; path: string }
+  | { type: "trashed"; paths: string[] };
 
 export interface EntryReference {
   path: string;

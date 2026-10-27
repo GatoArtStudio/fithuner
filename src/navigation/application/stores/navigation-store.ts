@@ -9,13 +9,9 @@ import {
   visit,
   type NavigationHistory,
 } from "../../domain/value-objects/navigation-history";
-import type { Place } from "../../domain/entities/place";
-import type { PlacesGateway } from "../ports/places-gateway";
 
 export interface NavigationState {
   history: NavigationHistory;
-  places: Place[];
-  loadPlaces: () => Promise<void>;
   navigateTo: (path?: string) => Promise<void>;
   goBack: () => Promise<void>;
   goForward: () => Promise<void>;
@@ -24,7 +20,6 @@ export interface NavigationState {
 export type NavigationStore = StoreApi<NavigationState>;
 
 export interface NavigationDependencies {
-  placesGateway: PlacesGateway;
   openDirectory: (path?: string) => Promise<string | null>;
 }
 
@@ -36,10 +31,7 @@ export function selectCanGoForward(state: NavigationState): boolean {
   return canGoForward(state.history);
 }
 
-export function createNavigationStore({
-  placesGateway,
-  openDirectory,
-}: NavigationDependencies): NavigationStore {
+export function createNavigationStore({ openDirectory }: NavigationDependencies): NavigationStore {
   return createStore<NavigationState>((set, get) => {
     async function moveInHistory(step: (history: NavigationHistory) => NavigationHistory) {
       const target = step(get().history);
@@ -52,16 +44,6 @@ export function createNavigationStore({
 
     return {
       history: EMPTY_HISTORY,
-      places: [],
-
-      loadPlaces: async () => {
-        try {
-          set({ places: await placesGateway.listPlaces() });
-        } catch {
-          set({ places: [] });
-        }
-      },
-
       navigateTo: async (path) => {
         const openedPath = await openDirectory(path);
         if (openedPath !== null) set({ history: visit(get().history, openedPath) });

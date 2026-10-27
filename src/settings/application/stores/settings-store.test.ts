@@ -6,7 +6,7 @@ import { createSettingsStore } from "./settings-store";
 const darkSettings: AppSettings = {
   ...DEFAULT_SETTINGS,
   appearance: { theme: "dark" },
-  browsing: { showHiddenFiles: true, confirmBeforeTrash: false },
+  browsing: { ...DEFAULT_SETTINGS.browsing, showHiddenFiles: true },
 };
 
 function setup(overrides: Partial<SettingsGateway> = {}) {
@@ -73,7 +73,7 @@ describe("settings store", () => {
     expect(store.getState().settings).toEqual({
       ...darkSettings,
       appearance: { theme: "light" },
-      browsing: { showHiddenFiles: true, confirmBeforeTrash: true },
+      browsing: { ...DEFAULT_SETTINGS.browsing, showHiddenFiles: true, confirmBeforeTrash: true },
     });
     const saveCalls = vi.mocked(gateway.saveSettings).mock.calls;
     expect(saveCalls[saveCalls.length - 1][0]).toEqual(store.getState().settings);

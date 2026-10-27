@@ -7,6 +7,7 @@ use crate::domains::file_transfer::application::services::{TransferPlanner, Tree
 use crate::domains::file_transfer::domain::{
     CancellationToken, ConflictResolution, DestinationGuard, EntryInfo, EntryKind,
     FileTransferError, TransferConflict, TransferMode, TransferOutcome, TransferProgress,
+    TransferredEntry,
 };
 use crate::domains::shared_kernel::naming::next_available_name;
 
@@ -19,6 +20,8 @@ pub struct EntryTransferrer<'a> {
     progress: TransferProgress,
     remembered_resolution: Option<ConflictResolution>,
     outcome: TransferOutcome,
+    is_top_level_pending: bool,
+    created_top_level: Option<PathBuf>,
 }
 
 impl<'a> EntryTransferrer<'a> {
@@ -45,6 +48,8 @@ impl<'a> EntryTransferrer<'a> {
             },
             remembered_resolution: None,
             outcome: TransferOutcome::default(),
+            is_top_level_pending: false,
+            created_top_level: None,
         }
     }
 
@@ -81,13 +86,29 @@ impl<'a> EntryTransferrer<'a> {
         if self.mode == TransferMode::Move && self.try_fast_move(source, &target) {
             return;
         }
+        self.is_top_level_pending = true;
+        self.created_top_level = None;
         let transferred_everything = self.transfer_entry(source, &target);
+        self.is_top_level_pending = false;
+        let created = self.created_top_level.take();
+
+        let is_complete = transferred_everything && !self.cancellation.is_cancelled();
+        let mut source_removed = true;
         if self.mode == TransferMode::Move
-            && transferred_everything
-            && !self.cancellation.is_cancelled()
+            && is_complete
             && let Err(error) = self.file_system.remove_entry(source)
         {
             self.record_failure(source, error);
+            source_removed = false;
+        }
+        if let Some(to) = created
+            && is_complete
+            && source_removed
+        {
+            self.outcome.transferred.push(TransferredEntry {
+                from: source.to_path_buf(),
+                to,
+            });
         }
     }
 
@@ -97,6 +118,10 @@ impl<'a> EntryTransferrer<'a> {
         }
         match self.file_system.rename(source, target) {
             Ok(()) => {
+                self.outcome.transferred.push(TransferredEntry {
+                    from: source.to_path_buf(),
+                    to: target.to_path_buf(),
+                });
                 let moved = TransferPlanner::measure(self.file_system, target);
                 self.progress.bytes_done += moved.bytes;
                 self.progress.files_done += moved.files;
@@ -188,34 +213,50 @@ impl<'a> EntryTransferrer<'a> {
     }
 
     fn prepare_target(&mut self, source: &Path, target: &Path, info: EntryInfo) -> Option<PathBuf> {
+        let is_top_level = std::mem::take(&mut self.is_top_level_pending);
+        let prepared = self.choose_target(source, target, info);
+        if is_top_level && let Some((final_target, true)) = &prepared {
+            self.created_top_level = Some(final_target.clone());
+        }
+        prepared.map(|(final_target, _)| final_target)
+    }
+
+    /// Returns the path to write to and whether it is a brand new entry (not a merge or a replacement).
+    fn choose_target(
+        &mut self,
+        source: &Path,
+        target: &Path,
+        info: EntryInfo,
+    ) -> Option<(PathBuf, bool)> {
         let existing = match self.file_system.entry_info(target) {
             Ok(existing) => existing,
-            Err(FileTransferError::NotFound) => return Some(target.to_path_buf()),
+            Err(FileTransferError::NotFound) => return Some((target.to_path_buf(), true)),
             Err(error) => {
                 self.record_failure(target, error);
                 return None;
             }
         };
         if info.kind == EntryKind::Directory && existing.kind == EntryKind::Directory {
-            return Some(target.to_path_buf());
+            return Some((target.to_path_buf(), false));
         }
 
         match self.resolve_conflict(source, target, info, existing) {
             ConflictResolution::Replace => {
                 if info.kind == EntryKind::File && existing.kind == EntryKind::File {
-                    return Some(target.to_path_buf());
+                    return Some((target.to_path_buf(), false));
                 }
                 match self.file_system.remove_entry(target) {
-                    Ok(()) => Some(target.to_path_buf()),
+                    Ok(()) => Some((target.to_path_buf(), false)),
                     Err(error) => {
                         self.record_failure(target, error);
                         None
                     }
                 }
             }
-            ConflictResolution::KeepBoth => {
-                Some(self.unique_sibling(target, info.kind != EntryKind::Directory))
-            }
+            ConflictResolution::KeepBoth => Some((
+                self.unique_sibling(target, info.kind != EntryKind::Directory),
+                true,
+            )),
             ConflictResolution::Skip => {
                 self.outcome.skipped.push(source.to_path_buf());
                 None

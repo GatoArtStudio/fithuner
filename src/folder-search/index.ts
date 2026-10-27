@@ -1,0 +1,11 @@
+export { createSearchStore } from "./application/stores/search-store";
+export type { SearchStore } from "./application/stores/search-store";
+export type { SearchGateway } from "./application/ports/search-gateway";
+export type { SearchMatch } from "./domain/entities/search";
+export { tauriSearchGateway } from "./infrastructure/gateways/tauri/tauri-search-gateway";
+export { SearchBar } from "./presentation/components/SearchBar";
+export { SearchResults, type SearchResultsHandle } from "./presentation/components/SearchResults";
+export { SearchToggleButton } from "./presentation/components/SearchToggleButton";
+export { SearchProvider, useSearch } from "./presentation/context/SearchContext";
+export { useSearchShortcuts } from "./presentation/hooks/useSearchShortcuts";
+export { useSelectedSearchResult } from "./presentation/hooks/useSelectedSearchResult";

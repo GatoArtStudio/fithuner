@@ -12,6 +12,7 @@ export interface DirectoryBrowsingState {
   selectedPaths: string[];
   openDirectory: (path?: string) => Promise<string | null>;
   refresh: () => Promise<void>;
+  reload: () => Promise<void>;
   toggleSort: (key: SortKey) => void;
   toggleShowHidden: () => void;
   setShowHidden: (showHidden: boolean) => void;
@@ -64,6 +65,25 @@ export function createDirectoryBrowsingStore(gateway: DirectoryGateway): Directo
     refresh: async () => {
       const currentPath = get().listing?.path;
       if (currentPath) await get().openDirectory(currentPath);
+    },
+
+    reload: async () => {
+      const currentPath = get().listing?.path;
+      if (!currentPath || get().isLoading) return;
+      const requestId = latestRequestId;
+
+      try {
+        const listing = await gateway.listDirectory(currentPath);
+        if (requestId !== latestRequestId) return;
+        const existingPaths = new Set(listing.entries.map((entry) => entry.path));
+        set(({ selectedPaths }) => ({
+          listing,
+          error: null,
+          selectedPaths: selectedPaths.filter((path) => existingPaths.has(path)),
+        }));
+      } catch (failure) {
+        if (requestId === latestRequestId) set({ error: toDirectoryError(failure) });
+      }
     },
 
     toggleSort: (key) =>

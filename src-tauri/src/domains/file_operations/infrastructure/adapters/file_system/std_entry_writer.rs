@@ -54,6 +54,9 @@ fn map_io_error(error: io::Error) -> FileOperationError {
         io::ErrorKind::NotFound => FileOperationError::NotFound,
         io::ErrorKind::PermissionDenied => FileOperationError::PermissionDenied,
         io::ErrorKind::AlreadyExists => FileOperationError::AlreadyExists,
+        io::ErrorKind::CrossesDevices => FileOperationError::Unexpected(
+            "The folders are on different drives, so the item cannot be moved back".into(),
+        ),
         _ => FileOperationError::Unexpected(error.to_string()),
     }
 }

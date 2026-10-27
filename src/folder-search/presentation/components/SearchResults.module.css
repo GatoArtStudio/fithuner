@@ -1,0 +1,104 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  container-type: inline-size;
+}
+
+.header,
+.row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.3fr) minmax(100px, 1fr) 80px 160px;
+  align-items: center;
+  column-gap: var(--space-3);
+  padding: 0 var(--space-4);
+}
+
+.header {
+  height: 32px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@container (max-width: 640px) {
+  .header,
+  .row {
+    grid-template-columns: minmax(120px, 1fr) minmax(80px, 0.8fr);
+  }
+
+  .header > :nth-child(n + 3),
+  .row > :nth-child(n + 3) {
+    display: none;
+  }
+}
+
+.scrollArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  outline: none;
+}
+
+.rows {
+  position: relative;
+  width: 100%;
+}
+
+.row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  cursor: default;
+}
+
+.row:hover {
+  background: var(--color-hover);
+}
+
+.selected,
+.selected:hover {
+  background: var(--color-selection);
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.nameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folderIcon {
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+
+.fileIcon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.secondary {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: var(--space-4) 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}

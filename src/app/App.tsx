@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { UpdateBadge, UpdatesProvider, UpdatesSection, useUpdates } from "../app-updates";
 import {
+  CommandPalette,
+  CommandPaletteProvider,
+  useCommandPaletteShortcuts,
+} from "../command-palette";
+import {
+  useSearch,
+  useSearchShortcuts,
+  useSelectedSearchResult,
+} from "../folder-search";
+import {
   PreviewPanel,
   PreviewProvider,
   QuickLook,
-  usePreview,
-  PreviewToggleButton,
   usePreviewLayout,
   usePreviewShortcuts,
   type PreviewTarget,
@@ -14,23 +22,16 @@ import {
   FileClipboardProvider,
   useClipboardMenuItems,
   useClipboardShortcuts,
-  useFileClipboard,
 } from "../file-clipboard";
 import {
-  DirectoryBrowsingProvider,
-  DirectoryList,
-  FolderStatusBar,
-  ShowHiddenToggle,
   useDirectoryBrowsing,
   useSelectedEntry,
   useSelectionCount,
   useVisibleEntries,
-  type FileEntry,
 } from "../directory-browsing";
 import {
   EntryContextMenu,
   FileOperationsProvider,
-  InlineRenameInput,
   DeleteConfirmationDialog,
   useFileOperationShortcuts,
   useFileOperations,
@@ -42,11 +43,9 @@ import {
   TransferPanel,
 } from "../file-transfer";
 import {
-  Breadcrumbs,
-  NavigationControls,
-  NavigationProvider,
+  PlacesProvider,
   Sidebar,
-  useNavigation,
+  usePlaces,
   useNavigationShortcuts,
 } from "../navigation";
 import {
@@ -57,24 +56,26 @@ import {
   useSettings,
   useSettingsShortcut,
 } from "../settings";
+import { UndoProvider, useUndoShortcuts } from "../undo-history";
+import { WorkspaceProvider, useWorkspaceShortcuts } from "../workspace";
 import { DragAndDropProvider } from "../shared/drag-and-drop/DragAndDropContext";
 import { DragPreview } from "../shared/drag-and-drop/DragPreview";
 import { ToastProvider } from "../shared/notifications/ToastContext";
 import { ToastViewport } from "../shared/notifications/ToastViewport";
+import { ActiveSession } from "./ActiveSession";
+import { WorkspaceView } from "./WorkspaceView";
 import { composeApplication } from "./composition-root";
 import styles from "./App.module.css";
 
 interface ExplorerProps {
   connectBackendEvents: () => Promise<() => void>;
+  startWorkspacePersistence: () => () => void;
 }
 
-function Explorer({ connectBackendEvents }: ExplorerProps) {
-  const loadPlaces = useNavigation((state) => state.loadPlaces);
-  const navigateTo = useNavigation((state) => state.navigateTo);
-  const renamingPath = useFileOperations((state) => state.renamingPath);
+function Explorer({ connectBackendEvents, startWorkspacePersistence }: ExplorerProps) {
+  const loadPlaces = usePlaces((state) => state.load);
   const openEntry = useFileOperations((state) => state.openEntry);
-  const openContextMenu = useFileOperations((state) => state.openContextMenu);
-  const cutPaths = useFileClipboard((state) => state.cutPaths);
+  const renamingPath = useFileOperations((state) => state.renamingPath);
   const isDialogOpen = useFileOperations((state) => state.pendingDeletion !== null);
   const renderClipboardMenuItems = useClipboardMenuItems();
   const loadSettings = useSettings((state) => state.load);
@@ -83,26 +84,34 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   useApplyTheme();
   useSettingsShortcut();
   const selectedEntry = useSelectedEntry();
-  const selectionCount = useSelectionCount();
+  const directorySelectionCount = useSelectionCount();
+  const isSearchOpen = useSearch((state) => state.isOpen);
+  const moveSearchSelection = useSearch((state) => state.moveSelection);
+  const selectedResult = useSelectedSearchResult();
+  const previewSource = isSearchOpen ? selectedResult : selectedEntry;
+  const selectionCount = isSearchOpen ? (selectedResult ? 1 : 0) : directorySelectionCount;
   const previewLayout = usePreviewLayout();
   const previewTarget = useMemo<PreviewTarget | null>(
     () =>
-      selectedEntry && {
-        path: selectedEntry.path,
-        name: selectedEntry.name,
-        kind: selectedEntry.kind,
-        sizeInBytes: selectedEntry.sizeInBytes,
-        modifiedAtMillis: selectedEntry.modifiedAtMillis,
+      previewSource && {
+        path: previewSource.path,
+        name: previewSource.name,
+        kind: previewSource.kind,
+        sizeInBytes: previewSource.sizeInBytes,
+        modifiedAtMillis: previewSource.modifiedAtMillis,
       },
-    [selectedEntry],
+    [previewSource],
   );
   const visibleEntries = useVisibleEntries();
   const selectOnly = useDirectoryBrowsing((state) => state.selectOnly);
-  const openQuickLook = usePreview((state) => state.openQuickLook);
   usePreviewShortcuts(isSettingsOpen);
-  useNavigationShortcuts(isSettingsOpen);
-  useFileOperationShortcuts(isSettingsOpen);
-  useClipboardShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen);
+  useSearchShortcuts(isSettingsOpen);
+  useCommandPaletteShortcuts(isSettingsOpen);
+  useNavigationShortcuts(isSettingsOpen || isSearchOpen);
+  useWorkspaceShortcuts(isSettingsOpen);
+  useUndoShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen || isSearchOpen);
+  useFileOperationShortcuts(isSettingsOpen || isSearchOpen);
+  useClipboardShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen || isSearchOpen);
 
   useEffect(() => {
     let isDisposed = false;
@@ -118,23 +127,31 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   }, [connectBackendEvents]);
 
   useEffect(() => {
-    void loadSettings().then(runStartupCheck);
-  }, [loadSettings, runStartupCheck]);
+    let isDisposed = false;
+    let stopPersistence: (() => void) | undefined;
+    void loadSettings().then(() => {
+      if (isDisposed) return;
+      stopPersistence = startWorkspacePersistence();
+      return runStartupCheck();
+    });
+    return () => {
+      isDisposed = true;
+      stopPersistence?.();
+    };
+  }, [loadSettings, runStartupCheck, startWorkspacePersistence]);
 
   useEffect(() => {
     void loadPlaces();
-    void navigateTo(undefined);
-  }, [loadPlaces, navigateTo]);
+  }, [loadPlaces]);
 
   function stepQuickLook(delta: 1 | -1) {
+    if (isSearchOpen) {
+      moveSearchSelection(delta);
+      return;
+    }
     const currentIndex = visibleEntries.findIndex((entry) => entry.path === selectedEntry?.path);
     const next = visibleEntries[currentIndex + delta];
     if (next) selectOnly(next.path);
-  }
-
-  function handleOpenEntry(entry: FileEntry) {
-    if (entry.kind === "directory") void navigateTo(entry.path);
-    else void openEntry(entry.path);
   }
 
   return (
@@ -142,34 +159,13 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       <div className={styles.shell} hidden={isSettingsOpen}>
         <Sidebar footer={<SettingsButton adornment={<UpdateBadge />} />} />
         <main className={styles.main}>
-          <header className={styles.toolbar}>
-            <NavigationControls />
-            <Breadcrumbs />
-            <ShowHiddenToggle />
-            <PreviewToggleButton />
-          </header>
           <div
             className={styles.content}
             data-panel={previewLayout.isPanelVisible ? previewLayout.position : "none"}
             style={{ "--panel-size": `${previewLayout.sizePx}px` } as React.CSSProperties}
           >
-            <div className={styles.listArea}>
-            <DirectoryList
-              onOpenEntry={handleOpenEntry}
-              onContextMenu={(entry, position) =>
-                openContextMenu({
-                  target: entry && { path: entry.path, kind: entry.kind },
-                  ...position,
-                })
-              }
-              isEntryDimmed={(entry) => cutPaths.includes(entry.path)}
-            onQuickLook={previewLayout.isQuickLookEnabled ? () => openQuickLook() : undefined}
-              renderNameEditor={(entry) =>
-                entry.path === renamingPath ? (
-                  <InlineRenameInput initialName={entry.name} isDirectory={entry.kind === "directory"} />
-                ) : null
-              }
-            />
+            <div className={styles.workspaceArea}>
+              <WorkspaceView />
             </div>
             <PreviewPanel
               target={previewTarget}
@@ -177,7 +173,6 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
               onOpenExternally={(path) => void openEntry(path)}
             />
           </div>
-          <FolderStatusBar />
         </main>
       </div>
       {isSettingsOpen && (
@@ -188,6 +183,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       <EntryContextMenu renderExtraItems={renderClipboardMenuItems} />
       <DeleteConfirmationDialog />
       <ConflictDialog />
+      <CommandPalette />
       <QuickLook
         target={previewTarget}
         onStep={stepQuickLook}
@@ -207,23 +203,32 @@ export function App() {
   return (
     <ToastProvider store={application.toastStore}>
       <SettingsProvider store={application.settingsStore}>
+      <CommandPaletteProvider store={application.commandPaletteStore}>
       <UpdatesProvider store={application.updatesStore}>
       <PreviewProvider store={application.previewStore} gateway={application.previewGateway}>
-      <DirectoryBrowsingProvider store={application.directoryBrowsingStore}>
-        <NavigationProvider store={application.navigationStore}>
+      <WorkspaceProvider store={application.workspaceStore}>
+      <UndoProvider store={application.undoStore}>
+      <ActiveSession workspaceStore={application.workspaceStore}>
+        <PlacesProvider store={application.placesStore}>
           <FileOperationsProvider store={application.fileOperationsStore}>
             <FileTransferProvider store={application.fileTransferStore}>
               <FileClipboardProvider store={application.fileClipboardStore}>
                 <DragAndDropProvider {...application.dragAndDrop}>
-                  <Explorer connectBackendEvents={application.connectBackendEvents} />
+                  <Explorer
+                    connectBackendEvents={application.connectBackendEvents}
+                    startWorkspacePersistence={application.startWorkspacePersistence}
+                  />
                 </DragAndDropProvider>
               </FileClipboardProvider>
             </FileTransferProvider>
           </FileOperationsProvider>
-        </NavigationProvider>
-      </DirectoryBrowsingProvider>
+        </PlacesProvider>
+      </ActiveSession>
+      </UndoProvider>
+      </WorkspaceProvider>
       </PreviewProvider>
       </UpdatesProvider>
+      </CommandPaletteProvider>
       </SettingsProvider>
     </ToastProvider>
   );

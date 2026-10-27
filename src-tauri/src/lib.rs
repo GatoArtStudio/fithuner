@@ -3,7 +3,7 @@ mod interface;
 
 use std::sync::Arc;
 
-use ::tauri::Manager;
+use ::tauri::{Emitter, Manager};
 
 use domains::app_updates::application::{
     CheckForUpdate, CheckForUpdateUseCase, DownloadUpdate, DownloadUpdateUseCase, InstallUpdate,
@@ -21,8 +21,8 @@ use domains::file_clipboard::application::{
 use domains::file_clipboard::infrastructure::{ClipboardRsAdapter, InMemoryCutMarker};
 use domains::file_operations::application::{
     CreateEntry, CreateEntryUseCase, DeleteEntriesPermanently, DeleteEntriesPermanentlyUseCase,
-    OpenEntry, OpenEntryUseCase, RenameEntry, RenameEntryUseCase, TrashEntries,
-    TrashEntriesUseCase,
+    MoveEntries, MoveEntriesUseCase, OpenEntry, OpenEntryUseCase, RenameEntry, RenameEntryUseCase,
+    RestoreEntries, RestoreEntriesUseCase, TrashEntries, TrashEntriesUseCase,
 };
 use domains::file_operations::infrastructure::{
     StdEntryWriter, SystemFileOpener, TrashCrateAdapter,
@@ -33,6 +33,12 @@ use domains::file_preview::application::{
 use domains::file_preview::infrastructure::StdPreviewSource;
 use domains::file_transfer::application::{TransferEntries, TransferEntriesUseCase};
 use domains::file_transfer::infrastructure::StdTransferFileSystem;
+use domains::folder_search::application::{SearchFolder, SearchFolderUseCase};
+use domains::folder_search::infrastructure::StdFolderWalker;
+use domains::folder_watching::application::{
+    FolderWatcherPort, UpdateWatchedFolders, UpdateWatchedFoldersUseCase,
+};
+use domains::folder_watching::infrastructure::{NoopFolderWatcher, NotifyFolderWatcher};
 use domains::places::application::{ListPlaces, ListPlacesUseCase};
 use domains::places::infrastructure::OsPlacesProvider;
 use domains::settings::application::{
@@ -40,6 +46,8 @@ use domains::settings::application::{
 };
 use domains::settings::infrastructure::JsonSettingsRepository;
 use interface::tauri::app_updates::commands::DownloadInProgress;
+use interface::tauri::folder_watching::commands::FOLDER_CHANGED_EVENT;
+use interface::tauri::folder_watching::dtos::FolderChangedDto;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -58,8 +66,13 @@ pub fn run() {
         Arc::new(CreateEntry::new(entry_writer.clone()));
     let rename_entry: Arc<dyn RenameEntryUseCase> =
         Arc::new(RenameEntry::new(entry_writer.clone()));
+    let trash_adapter = Arc::new(TrashCrateAdapter);
     let trash_entries: Arc<dyn TrashEntriesUseCase> =
-        Arc::new(TrashEntries::new(Arc::new(TrashCrateAdapter)));
+        Arc::new(TrashEntries::new(trash_adapter.clone()));
+    let restore_entries: Arc<dyn RestoreEntriesUseCase> =
+        Arc::new(RestoreEntries::new(trash_adapter));
+    let move_entries: Arc<dyn MoveEntriesUseCase> =
+        Arc::new(MoveEntries::new(entry_writer.clone()));
     let delete_entries_permanently: Arc<dyn DeleteEntriesPermanentlyUseCase> =
         Arc::new(DeleteEntriesPermanently::new(entry_writer));
 
@@ -95,6 +108,11 @@ pub fn run() {
     let summarize_folder: Arc<dyn SummarizeFolderUseCase> =
         Arc::new(SummarizeFolder::new(preview_source));
 
+    let search_folder: Arc<dyn SearchFolderUseCase> =
+        Arc::new(SearchFolder::new(Arc::new(StdFolderWalker)));
+    let search_sessions =
+        Arc::new(interface::tauri::folder_search::sessions::SearchSessions::default());
+
     let builder = ::tauri::Builder::default()
         .setup(|app| {
             let update_source = Arc::new(TauriUpdateSource::new(app.handle().clone()));
@@ -108,6 +126,26 @@ pub fn run() {
             let open_release_page: Arc<dyn OpenReleasePageUseCase> =
                 Arc::new(OpenReleasePage::new(Arc::new(SystemLinkOpener)));
 
+            let app_handle = app.handle().clone();
+            let folder_watcher: Arc<dyn FolderWatcherPort> =
+                match NotifyFolderWatcher::new(Arc::new(move |folder| {
+                    let _ = app_handle.emit(
+                        FOLDER_CHANGED_EVENT,
+                        FolderChangedDto {
+                            path: folder.to_string_lossy().into_owned(),
+                        },
+                    );
+                })) {
+                    Ok(watcher) => Arc::new(watcher),
+                    Err(error) => {
+                        log::warn!("Live folder updates are unavailable: {error}");
+                        Arc::new(NoopFolderWatcher)
+                    }
+                };
+            let update_watched_folders: Arc<dyn UpdateWatchedFoldersUseCase> =
+                Arc::new(UpdateWatchedFolders::new(folder_watcher));
+
+            app.manage(update_watched_folders);
             app.manage(check_for_update);
             app.manage(download_update);
             app.manage(install_update);
@@ -121,6 +159,8 @@ pub fn run() {
         .manage(create_entry)
         .manage(rename_entry)
         .manage(trash_entries)
+        .manage(restore_entries)
+        .manage(move_entries)
         .manage(delete_entries_permanently)
         .manage(transfer_entries)
         .manage(transfer_sessions)
@@ -130,7 +170,9 @@ pub fn run() {
         .manage(load_settings)
         .manage(save_settings)
         .manage(read_text_preview)
-        .manage(summarize_folder);
+        .manage(summarize_folder)
+        .manage(search_folder)
+        .manage(search_sessions);
 
     #[cfg(desktop)]
     let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
@@ -144,6 +186,8 @@ pub fn run() {
             interface::tauri::file_operations::commands::rename_entry,
             interface::tauri::file_operations::commands::trash_entries,
             interface::tauri::file_operations::commands::delete_entries_permanently,
+            interface::tauri::file_operations::commands::move_entries,
+            interface::tauri::file_operations::commands::restore_entries,
             interface::tauri::file_transfer::commands::start_transfer,
             interface::tauri::file_transfer::commands::cancel_transfer,
             interface::tauri::file_transfer::commands::resolve_conflict,
@@ -157,7 +201,10 @@ pub fn run() {
             interface::tauri::app_updates::commands::check_for_update,
             interface::tauri::app_updates::commands::download_update,
             interface::tauri::app_updates::commands::install_update_and_restart,
-            interface::tauri::app_updates::commands::open_release_page
+            interface::tauri::app_updates::commands::open_release_page,
+            interface::tauri::folder_search::commands::start_search,
+            interface::tauri::folder_search::commands::cancel_search,
+            interface::tauri::folder_watching::commands::watch_folders
         ])
         .run(::tauri::generate_context!())
         .expect("error while running tauri application");

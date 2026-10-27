@@ -3,10 +3,10 @@ use std::sync::Arc;
 
 use tauri::State;
 
-use super::dtos::{BatchOutcomeDto, FileOperationErrorDto, NewEntryKindDto};
+use super::dtos::{BatchOutcomeDto, EntryMoveDto, FileOperationErrorDto, NewEntryKindDto};
 use crate::domains::file_operations::application::{
-    CreateEntryUseCase, DeleteEntriesPermanentlyUseCase, OpenEntryUseCase, RenameEntryUseCase,
-    TrashEntriesUseCase,
+    CreateEntryUseCase, DeleteEntriesPermanentlyUseCase, MoveEntriesUseCase, OpenEntryUseCase,
+    RenameEntryUseCase, RestoreEntriesUseCase, TrashEntriesUseCase,
 };
 
 fn path_to_string(path: PathBuf) -> String {
@@ -58,6 +58,26 @@ pub fn trash_entries(
 #[tauri::command]
 pub fn delete_entries_permanently(
     use_case: State<'_, Arc<dyn DeleteEntriesPermanentlyUseCase>>,
+    paths: Vec<String>,
+) -> BatchOutcomeDto {
+    use_case
+        .execute(paths.into_iter().map(PathBuf::from).collect())
+        .into()
+}
+
+#[tauri::command]
+pub fn move_entries(
+    use_case: State<'_, Arc<dyn MoveEntriesUseCase>>,
+    moves: Vec<EntryMoveDto>,
+) -> BatchOutcomeDto {
+    use_case
+        .execute(moves.into_iter().map(Into::into).collect())
+        .into()
+}
+
+#[tauri::command]
+pub fn restore_entries(
+    use_case: State<'_, Arc<dyn RestoreEntriesUseCase>>,
     paths: Vec<String>,
 ) -> BatchOutcomeDto {
     use_case

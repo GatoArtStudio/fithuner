@@ -1,0 +1,20 @@
+export type { Pane } from "./domain/entities/pane";
+export type { Tab } from "./domain/entities/tab";
+export type { PaneLayout, WorkspaceLayout } from "./domain/entities/workspace-layout";
+export { layoutOf, parseWorkspaceLayout } from "./domain/services/workspace-layout";
+export type { Workspace } from "./domain/entities/workspace";
+export { activePaneOf, activeTabOf, isSplit, otherPaneOf } from "./domain/services/workspace-queries";
+export { createWorkspaceStore, selectActiveSession } from "./application/stores/workspace-store";
+export type {
+  WorkspaceSession,
+  WorkspaceState,
+  WorkspaceStore,
+} from "./application/stores/workspace-store";
+export { TabBar } from "./presentation/components/TabBar";
+export { WorkspaceProvider, useWorkspace } from "./presentation/context/WorkspaceContext";
+export { useWorkspaceShortcuts } from "./presentation/hooks/useWorkspaceShortcuts";
+export { SplitDivider } from "./presentation/components/SplitDivider";
+export { SplitToggleButton } from "./presentation/components/SplitToggleButton";
+export type { WorkspaceLayoutGateway } from "./application/ports/workspace-layout-gateway";
+export { createLocalStorageWorkspaceLayoutGateway } from "./infrastructure/gateways/local-storage/local-storage-workspace-layout-gateway";
+export { createMemoryWorkspaceLayoutGateway } from "./infrastructure/gateways/memory/memory-workspace-layout-gateway";
