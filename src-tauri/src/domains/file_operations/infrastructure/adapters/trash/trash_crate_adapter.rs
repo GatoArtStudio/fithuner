@@ -6,6 +6,7 @@ use crate::domains::file_operations::domain::FileOperationError;
 pub struct TrashCrateAdapter;
 
 /// Index of the most recently deleted item among those that were deleted from `original`.
+#[cfg_attr(target_os = "macos", allow(dead_code))]
 fn latest_deleted_from(items: &[(PathBuf, i64)], original: &Path) -> Option<usize> {
     items
         .iter()

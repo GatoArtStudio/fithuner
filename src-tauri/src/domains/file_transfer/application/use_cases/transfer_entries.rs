@@ -523,8 +523,8 @@ mod tests {
             .iter()
             .map(|entry| {
                 (
-                    entry.from.to_string_lossy().into_owned(),
-                    entry.to.to_string_lossy().into_owned(),
+                    entry.from.to_string_lossy().replace('\\', "/"),
+                    entry.to.to_string_lossy().replace('\\', "/"),
                 )
             })
             .collect()
