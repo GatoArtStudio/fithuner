@@ -5,5 +5,6 @@ export type { TransferMode, TransferRequest } from "./domain/entities/transfer";
 export { isValidDropTarget } from "./domain/services/is-valid-drop-target";
 export { tauriFileTransferGateway } from "./infrastructure/gateways/tauri/tauri-file-transfer-gateway";
 export { ConflictDialog } from "./presentation/components/ConflictDialog";
+export { ExternalDropOverlay } from "./presentation/components/ExternalDropOverlay";
 export { TransferPanel } from "./presentation/components/TransferPanel";
 export { FileTransferProvider, useFileTransfer } from "./presentation/context/FileTransferContext";

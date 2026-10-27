@@ -42,7 +42,7 @@ export function InlineRenameInput({ initialName, isDirectory }: InlineRenameInpu
   }
 
   return (
-    <span className={styles.wrapper} onClick={(event) => event.stopPropagation()} onDoubleClick={(event) => event.stopPropagation()}>
+    <span className={styles.wrapper} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onDoubleClick={(event) => event.stopPropagation()}>
       <input
         ref={inputRef}
         className={`${styles.input} ${renameError ? styles.invalid : ""}`}

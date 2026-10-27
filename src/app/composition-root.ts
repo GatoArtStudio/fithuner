@@ -4,8 +4,10 @@ import {
 } from "../directory-browsing";
 import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
-import { createFileTransferStore, tauriFileTransferGateway } from "../file-transfer";
+import { createFileTransferStore, isValidDropTarget, tauriFileTransferGateway } from "../file-transfer";
 import { createNavigationStore, tauriPlacesGateway } from "../navigation";
+import { createDragSessionStore } from "../shared/drag-and-drop/drag-session-store";
+import { findDropTargetAt } from "../shared/drag-and-drop/drop-targets";
 import { createToastStore } from "../shared/notifications/toast-store";
 
 export function composeApplication() {
@@ -29,6 +31,8 @@ export function composeApplication() {
   const fileTransferStore = createFileTransferStore({
     gateway: tauriFileTransferGateway,
     refreshDirectory: () => directoryBrowsingStore.getState().refresh(),
+    resolveDropTargetAt: findDropTargetAt,
+    currentDirectoryPath: () => directoryBrowsingStore.getState().listing?.path ?? null,
     notify: (message, tone) => toastStore.getState().push(message, tone),
   });
 
@@ -42,8 +46,25 @@ export function composeApplication() {
     notifyError: (message) => toastStore.getState().push(message, "error"),
   });
 
-  function connectBackendEvents() {
-    return tauriFileTransferGateway.subscribeToTransfers(fileTransferStore.getState().handleEvent);
+  const dragSessionStore = createDragSessionStore();
+  const dragAndDrop = {
+    store: dragSessionStore,
+    canDrop: isValidDropTarget,
+    onDrop: ({ paths, targetPath, isCopy }: { paths: string[]; targetPath: string; isCopy: boolean }) => {
+      void fileTransferStore.getState().startTransfer({
+        sources: paths,
+        destinationDirectory: targetPath,
+        mode: isCopy ? "copy" : "move",
+      });
+    },
+  };
+
+  async function connectBackendEvents() {
+    const unsubscribes = await Promise.all([
+      tauriFileTransferGateway.subscribeToTransfers(fileTransferStore.getState().handleEvent),
+      tauriFileTransferGateway.subscribeToExternalDrags(fileTransferStore.getState().handleExternalDrag),
+    ]);
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
   }
 
   return {
@@ -53,6 +74,7 @@ export function composeApplication() {
     fileOperationsStore,
     fileTransferStore,
     fileClipboardStore,
+    dragAndDrop,
     connectBackendEvents,
   };
 }

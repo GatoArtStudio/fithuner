@@ -21,6 +21,7 @@ export function Breadcrumbs() {
           <button
             type="button"
             className={styles.segment}
+            data-drop-path={breadcrumb.path}
             aria-current={index === breadcrumbs.length - 1 ? "page" : undefined}
             onClick={() => navigateTo(breadcrumb.path)}
           >

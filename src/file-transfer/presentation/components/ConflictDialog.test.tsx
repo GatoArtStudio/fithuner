@@ -13,7 +13,7 @@ async function renderWithConflict() {
     subscribeToTransfers: vi.fn(),
     subscribeToExternalDrags: vi.fn(),
   };
-  const store = createFileTransferStore({ gateway, refreshDirectory: vi.fn(), notify: vi.fn() });
+  const store = createFileTransferStore({ gateway, refreshDirectory: vi.fn(), resolveDropTargetAt: () => null, currentDirectoryPath: () => null, notify: vi.fn() });
   await store.getState().startTransfer({ sources: ["/src/a.txt"], destinationDirectory: "/dest", mode: "copy" });
   store.getState().handleEvent({
     type: "conflict",

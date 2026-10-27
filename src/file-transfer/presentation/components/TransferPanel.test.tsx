@@ -8,7 +8,7 @@ import { TransferPanel } from "./TransferPanel";
 describe("TransferPanel", () => {
   it("shows nothing when there are no transfers", () => {
     const gateway = { startTransfer: vi.fn() } as unknown as FileTransferGateway;
-    const store = createFileTransferStore({ gateway, refreshDirectory: vi.fn(), notify: vi.fn() });
+    const store = createFileTransferStore({ gateway, refreshDirectory: vi.fn(), resolveDropTargetAt: () => null, currentDirectoryPath: () => null, notify: vi.fn() });
 
     const { container } = render(
       <FileTransferProvider store={store}>
@@ -27,7 +27,7 @@ describe("TransferPanel", () => {
       subscribeToTransfers: vi.fn(),
       subscribeToExternalDrags: vi.fn(),
     };
-    const store = createFileTransferStore({ gateway, refreshDirectory: vi.fn(), notify: vi.fn() });
+    const store = createFileTransferStore({ gateway, refreshDirectory: vi.fn(), resolveDropTargetAt: () => null, currentDirectoryPath: () => null, notify: vi.fn() });
     await store.getState().startTransfer({ sources: ["/a", "/b"], destinationDirectory: "/home/docs", mode: "move" });
     store.getState().handleEvent({
       type: "progress",

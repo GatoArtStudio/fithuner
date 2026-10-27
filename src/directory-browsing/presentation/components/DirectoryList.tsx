@@ -1,5 +1,14 @@
-import { useEffect, useMemo, useRef, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { useDragSource } from "../../../shared/drag-and-drop/useDragSource";
 import { Icon } from "../../../shared/icons/Icon";
 import type { FileEntry } from "../../domain/entities/file-entry";
 import {
@@ -55,6 +64,7 @@ export function DirectoryList({
   const toggleSelection = useDirectoryBrowsing((state) => state.toggleSelection);
   const clearSelection = useDirectoryBrowsing((state) => state.clearSelection);
 
+  const beginDrag = useDragSource();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const visibleEntries = useMemo(
@@ -79,6 +89,15 @@ export function DirectoryList({
     const index = visibleEntries.findIndex((entry) => entry.path === lastSelectedPath);
     if (index !== -1) virtualizer.scrollToIndex(index);
   }, [lastSelectedPath, visibleEntries, virtualizer]);
+
+  function handleRowPointerDown(event: PointerEvent, entry: FileEntry) {
+    const isPartOfSelection = selectedPathSet.has(entry.path);
+    beginDrag(event, {
+      paths: isPartOfSelection ? selectedPaths : [entry.path],
+      label: entry.name,
+    });
+    if (!isPartOfSelection && !event.ctrlKey && !event.metaKey) selectOnly(entry.path);
+  }
 
   function handleRowContextMenu(event: MouseEvent, entry: FileEntry) {
     event.preventDefault();
@@ -201,7 +220,9 @@ export function DirectoryList({
                 className={`${styles.row} ${isSelected ? styles.selected : ""} ${
                   entry.isHidden ? styles.hidden : ""
                 } ${isEntryDimmed?.(entry) ? styles.dimmed : ""}`}
+                data-drop-path={entry.kind === "directory" ? entry.path : undefined}
                 style={{ height: ROW_HEIGHT, transform: `translateY(${virtualRow.start}px)` }}
+                onPointerDown={(event) => handleRowPointerDown(event, entry)}
                 onClick={(event) => handleRowClick(event, entry)}
                 onContextMenu={(event) => handleRowContextMenu(event, entry)}
                 onDoubleClick={() => onOpenEntry(entry)}

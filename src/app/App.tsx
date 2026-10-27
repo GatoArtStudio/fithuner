@@ -20,7 +20,12 @@ import {
   useFileOperationShortcuts,
   useFileOperations,
 } from "../file-operations";
-import { ConflictDialog, FileTransferProvider, TransferPanel } from "../file-transfer";
+import {
+  ConflictDialog,
+  ExternalDropOverlay,
+  FileTransferProvider,
+  TransferPanel,
+} from "../file-transfer";
 import {
   Breadcrumbs,
   NavigationControls,
@@ -29,6 +34,8 @@ import {
   useNavigation,
   useNavigationShortcuts,
 } from "../navigation";
+import { DragAndDropProvider } from "../shared/drag-and-drop/DragAndDropContext";
+import { DragPreview } from "../shared/drag-and-drop/DragPreview";
 import { ToastProvider } from "../shared/notifications/ToastContext";
 import { ToastViewport } from "../shared/notifications/ToastViewport";
 import { composeApplication } from "./composition-root";
@@ -106,6 +113,8 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       <PermanentDeleteDialog />
       <ConflictDialog />
       <TransferPanel />
+      <ExternalDropOverlay />
+      <DragPreview />
       <ToastViewport />
     </div>
   );
@@ -121,7 +130,9 @@ export function App() {
           <FileOperationsProvider store={application.fileOperationsStore}>
             <FileTransferProvider store={application.fileTransferStore}>
               <FileClipboardProvider store={application.fileClipboardStore}>
-                <Explorer connectBackendEvents={application.connectBackendEvents} />
+                <DragAndDropProvider {...application.dragAndDrop}>
+                  <Explorer connectBackendEvents={application.connectBackendEvents} />
+                </DragAndDropProvider>
               </FileClipboardProvider>
             </FileTransferProvider>
           </FileOperationsProvider>

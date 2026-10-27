@@ -1,6 +1,7 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 import type {
   ConflictDecision,
+  ExternalDragEvent,
   TransferConflict,
   TransferEvent,
   TransferFinished,
@@ -22,10 +23,12 @@ export interface ActiveTransfer {
 
 export interface FileTransferState {
   transfers: ActiveTransfer[];
+  externalDropTarget: string | null;
   startTransfer: (request: TransferRequest) => Promise<void>;
   cancelTransfer: (transferId: string) => Promise<void>;
   resolveConflict: (transferId: string, decision: ConflictDecision) => Promise<void>;
   handleEvent: (event: TransferEvent) => void;
+  handleExternalDrag: (event: ExternalDragEvent) => void;
 }
 
 export type FileTransferStore = StoreApi<FileTransferState>;
@@ -38,6 +41,8 @@ export interface FinishedTransfer {
 export interface FileTransferDependencies {
   gateway: FileTransferGateway;
   refreshDirectory: () => Promise<void>;
+  resolveDropTargetAt: (x: number, y: number) => string | null;
+  currentDirectoryPath: () => string | null;
   notify: (message: string, tone: "info" | "error") => void;
   onTransferFinished?: (finished: FinishedTransfer) => void;
   now?: () => number;
@@ -57,6 +62,8 @@ function eventTransferId(event: TransferEvent): string {
 export function createFileTransferStore({
   gateway,
   refreshDirectory,
+  resolveDropTargetAt,
+  currentDirectoryPath,
   notify,
   onTransferFinished,
   now = Date.now,
@@ -105,6 +112,7 @@ export function createFileTransferStore({
 
     return {
       transfers: [],
+      externalDropTarget: null,
 
       startTransfer: async (request) => {
         let transferId: string;
@@ -155,6 +163,23 @@ export function createFileTransferStore({
           updateTransfer(transferId, (transfer) => ({ ...transfer, pendingConflict: event.conflict }));
         } else {
           finish(event.finished);
+        }
+      },
+
+      handleExternalDrag: (event) => {
+        if (event.type === "leave") {
+          set({ externalDropTarget: null });
+          return;
+        }
+        const target =
+          resolveDropTargetAt(event.position.x, event.position.y) ?? currentDirectoryPath();
+        if (event.type !== "drop") {
+          set({ externalDropTarget: target });
+          return;
+        }
+        set({ externalDropTarget: null });
+        if (target !== null && event.paths.length > 0) {
+          void get().startTransfer({ sources: event.paths, destinationDirectory: target, mode: "copy" });
         }
       },
     };

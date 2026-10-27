@@ -47,6 +47,8 @@ function setup(gatewayOverrides: Partial<FileTransferGateway> = {}) {
   const store = createFileTransferStore({
     gateway,
     refreshDirectory,
+    resolveDropTargetAt: (x) => (x < 100 ? "/hovered" : null),
+    currentDirectoryPath: () => "/current",
     notify,
     onTransferFinished,
     now: () => 1000,
@@ -143,5 +145,32 @@ describe("file transfer store", () => {
     await store.getState().cancelTransfer("t1");
 
     expect(gateway.cancelTransfer).toHaveBeenCalledWith("t1");
+  });
+
+  it("highlights the folder under an external drag and falls back to the current folder", () => {
+    const { store } = setup();
+
+    store.getState().handleExternalDrag({ type: "over", position: { x: 10, y: 10 } });
+    expect(store.getState().externalDropTarget).toBe("/hovered");
+
+    store.getState().handleExternalDrag({ type: "over", position: { x: 500, y: 10 } });
+    expect(store.getState().externalDropTarget).toBe("/current");
+
+    store.getState().handleExternalDrag({ type: "leave" });
+    expect(store.getState().externalDropTarget).toBeNull();
+  });
+
+  it("copies files dropped from another application into the hovered folder", async () => {
+    const { store, gateway } = setup();
+
+    store.getState().handleExternalDrag({ type: "drop", paths: ["/outside/a.txt"], position: { x: 10, y: 10 } });
+    await vi.waitFor(() => expect(gateway.startTransfer).toHaveBeenCalled());
+
+    expect(gateway.startTransfer).toHaveBeenCalledWith({
+      sources: ["/outside/a.txt"],
+      destinationDirectory: "/hovered",
+      mode: "copy",
+    });
+    expect(store.getState().externalDropTarget).toBeNull();
   });
 });
