@@ -1,6 +1,6 @@
 [package]
 name = "fithuner"
-version = "0.1.0"
+version = "0.1.1"
 description = "Cross-platform file explorer focused on UI and UX"
 authors = ["GatoArtStudio"]
 license = "MIT"
