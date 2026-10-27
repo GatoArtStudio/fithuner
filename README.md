@@ -8,6 +8,8 @@ A cross-platform file explorer focused on UI and UX, built with Tauri, React and
 - Copy, cut, paste and move with progress, cancellation and conflict resolution (replace, skip, keep both)
 - Drag and drop between folders, the sidebar and breadcrumbs, and drop files from other apps to copy them
 - System clipboard integration for files
+- Search by name in the current folder and its subfolders, with type filters and results that stream in while the search runs
+- Command palette (`Ctrl+K`) to run any command, jump to a folder or place, or type a path
 - Configurable file preview in a resizable side or bottom panel, plus Quick Look with `Space`: images, text and code with syntax highlighting, Markdown, JSON, CSV, PDF, audio, video and folders
 - Settings screen (`Ctrl+,`) with theme (system, light, dark), hidden files, trash confirmation and a Preview section to switch each file type on or off and set size limits
 - Updates from Settings: Fithuner tells you when a new version exists and you choose when to download and install it
@@ -51,6 +53,8 @@ pnpm tauri dev
 | `Menu` / `Shift+F10` / right click | Context menu |
 | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` | Copy / cut / paste files |
 | `Ctrl+,` | Open settings |
+| `Ctrl+F` | Search this folder and its subfolders |
+| `Ctrl+K` / `Ctrl+Shift+P` | Command palette |
 | `Space` | Quick Look of the selected file (`↑` `↓` browse, `Space` or `Esc` close) |
 | `Alt+P` | Show or hide the preview panel |
 | Drag | Move to the folder under the pointer |
@@ -61,6 +65,17 @@ pnpm tauri dev
 - Copied files go to the system clipboard, so you can paste them in other file managers. The "cut" state is only known to Fithuner: pasting cut files elsewhere copies them.
 - On Linux the clipboard works on X11 and Wayland. If the system clipboard is unavailable, Fithuner keeps the files in memory so copy and paste still work inside the app.
 - Dragging files out of Fithuner into other apps is not supported yet.
+
+## Search
+- `Ctrl+F` opens the search bar. Type to search by name (case and accents are ignored; every word must appear in the name). Results appear as they are found and show the folder they are in.
+- Filter by type (folders, files, images, documents, audio, video, archives, code) and choose whether to include hidden items.
+- `Enter` or double click opens a result (a folder opens in the explorer), `Ctrl+Enter` shows it in its folder, `Esc` closes the search. The preview panel and Quick Look follow the selected result.
+- Searches look at names only (not file contents) and stop after 10,000 results.
+
+## Command palette
+- `Ctrl+K` (or `Ctrl+Shift+P`) lists the available commands with their shortcuts. Type a few letters to filter them.
+- Type a path (`/etc`, `~/Pictures`, `C:\Users`) to jump to it, pick a place or a recent folder, or choose "Search for ..." to search for the text you typed.
+- Commands that need a selection only appear when something is selected.
 
 ## Preview
 - The panel follows the selected file; drag its edge (or focus it and use the arrow keys) to resize it. Move it to the bottom in Settings > Preview.

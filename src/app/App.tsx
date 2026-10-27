@@ -1,5 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { UpdateBadge, UpdatesProvider, UpdatesSection, useUpdates } from "../app-updates";
+import {
+  CommandPalette,
+  CommandPaletteProvider,
+  useCommandPaletteShortcuts,
+} from "../command-palette";
+import {
+  SearchBar,
+  SearchProvider,
+  SearchResults,
+  SearchToggleButton,
+  useSearch,
+  useSearchShortcuts,
+  useSelectedSearchResult,
+  type SearchMatch,
+  type SearchResultsHandle,
+} from "../folder-search";
 import {
   PreviewPanel,
   PreviewProvider,
@@ -32,6 +48,7 @@ import {
   FileOperationsProvider,
   InlineRenameInput,
   DeleteConfirmationDialog,
+  fileNameOf,
   useFileOperationShortcuts,
   useFileOperations,
 } from "../file-operations";
@@ -83,26 +100,36 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   useApplyTheme();
   useSettingsShortcut();
   const selectedEntry = useSelectedEntry();
-  const selectionCount = useSelectionCount();
+  const directorySelectionCount = useSelectionCount();
+  const isSearchOpen = useSearch((state) => state.isOpen);
+  const closeSearch = useSearch((state) => state.close);
+  const moveSearchSelection = useSearch((state) => state.moveSelection);
+  const selectedResult = useSelectedSearchResult();
+  const resultsRef = useRef<SearchResultsHandle>(null);
+  const currentFolderPath = useDirectoryBrowsing((state) => state.listing?.path ?? null);
+  const previewSource = isSearchOpen ? selectedResult : selectedEntry;
+  const selectionCount = isSearchOpen ? (selectedResult ? 1 : 0) : directorySelectionCount;
   const previewLayout = usePreviewLayout();
   const previewTarget = useMemo<PreviewTarget | null>(
     () =>
-      selectedEntry && {
-        path: selectedEntry.path,
-        name: selectedEntry.name,
-        kind: selectedEntry.kind,
-        sizeInBytes: selectedEntry.sizeInBytes,
-        modifiedAtMillis: selectedEntry.modifiedAtMillis,
+      previewSource && {
+        path: previewSource.path,
+        name: previewSource.name,
+        kind: previewSource.kind,
+        sizeInBytes: previewSource.sizeInBytes,
+        modifiedAtMillis: previewSource.modifiedAtMillis,
       },
-    [selectedEntry],
+    [previewSource],
   );
   const visibleEntries = useVisibleEntries();
   const selectOnly = useDirectoryBrowsing((state) => state.selectOnly);
   const openQuickLook = usePreview((state) => state.openQuickLook);
   usePreviewShortcuts(isSettingsOpen);
-  useNavigationShortcuts(isSettingsOpen);
-  useFileOperationShortcuts(isSettingsOpen);
-  useClipboardShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen);
+  useSearchShortcuts(isSettingsOpen);
+  useCommandPaletteShortcuts(isSettingsOpen);
+  useNavigationShortcuts(isSettingsOpen || isSearchOpen);
+  useFileOperationShortcuts(isSettingsOpen || isSearchOpen);
+  useClipboardShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen || isSearchOpen);
 
   useEffect(() => {
     let isDisposed = false;
@@ -126,7 +153,29 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
     void navigateTo(undefined);
   }, [loadPlaces, navigateTo]);
 
+  function parentFolderOf(match: SearchMatch): string {
+    return match.path.slice(0, match.path.length - match.name.length).replace(/[\\/]$/, "") || "/";
+  }
+
+  function handleOpenMatch(match: SearchMatch) {
+    if (match.kind === "directory") {
+      closeSearch();
+      void navigateTo(match.path);
+    } else {
+      void openEntry(match.path);
+    }
+  }
+
+  function handleShowInFolder(match: SearchMatch) {
+    closeSearch();
+    void navigateTo(parentFolderOf(match)).then(() => selectOnly(match.path));
+  }
+
   function stepQuickLook(delta: 1 | -1) {
+    if (isSearchOpen) {
+      moveSearchSelection(delta);
+      return;
+    }
     const currentIndex = visibleEntries.findIndex((entry) => entry.path === selectedEntry?.path);
     const next = visibleEntries[currentIndex + delta];
     if (next) selectOnly(next.path);
@@ -146,30 +195,47 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
             <NavigationControls />
             <Breadcrumbs />
             <ShowHiddenToggle />
+            <SearchToggleButton />
             <PreviewToggleButton />
           </header>
+          {isSearchOpen && (
+            <SearchBar
+              folderName={fileNameOf(currentFolderPath ?? "/")}
+              onFocusResults={() => resultsRef.current?.focus()}
+              onOpenSelected={() => selectedResult && handleOpenMatch(selectedResult)}
+            />
+          )}
           <div
             className={styles.content}
             data-panel={previewLayout.isPanelVisible ? previewLayout.position : "none"}
             style={{ "--panel-size": `${previewLayout.sizePx}px` } as React.CSSProperties}
           >
             <div className={styles.listArea}>
-            <DirectoryList
-              onOpenEntry={handleOpenEntry}
-              onContextMenu={(entry, position) =>
-                openContextMenu({
-                  target: entry && { path: entry.path, kind: entry.kind },
-                  ...position,
-                })
-              }
-              isEntryDimmed={(entry) => cutPaths.includes(entry.path)}
-            onQuickLook={previewLayout.isQuickLookEnabled ? () => openQuickLook() : undefined}
-              renderNameEditor={(entry) =>
-                entry.path === renamingPath ? (
-                  <InlineRenameInput initialName={entry.name} isDirectory={entry.kind === "directory"} />
-                ) : null
-              }
-            />
+              {isSearchOpen ? (
+                <SearchResults
+                  ref={resultsRef}
+                  onOpenMatch={handleOpenMatch}
+                  onShowInFolder={handleShowInFolder}
+                  onQuickLook={previewLayout.isQuickLookEnabled ? () => openQuickLook() : undefined}
+                />
+              ) : (
+              <DirectoryList
+                onOpenEntry={handleOpenEntry}
+                onContextMenu={(entry, position) =>
+                  openContextMenu({
+                    target: entry && { path: entry.path, kind: entry.kind },
+                    ...position,
+                  })
+                }
+                isEntryDimmed={(entry) => cutPaths.includes(entry.path)}
+              onQuickLook={previewLayout.isQuickLookEnabled ? () => openQuickLook() : undefined}
+                renderNameEditor={(entry) =>
+                  entry.path === renamingPath ? (
+                    <InlineRenameInput initialName={entry.name} isDirectory={entry.kind === "directory"} />
+                  ) : null
+                }
+              />
+              )}
             </div>
             <PreviewPanel
               target={previewTarget}
@@ -188,6 +254,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       <EntryContextMenu renderExtraItems={renderClipboardMenuItems} />
       <DeleteConfirmationDialog />
       <ConflictDialog />
+      <CommandPalette />
       <QuickLook
         target={previewTarget}
         onStep={stepQuickLook}
@@ -207,6 +274,8 @@ export function App() {
   return (
     <ToastProvider store={application.toastStore}>
       <SettingsProvider store={application.settingsStore}>
+      <CommandPaletteProvider store={application.commandPaletteStore}>
+      <SearchProvider store={application.searchStore}>
       <UpdatesProvider store={application.updatesStore}>
       <PreviewProvider store={application.previewStore} gateway={application.previewGateway}>
       <DirectoryBrowsingProvider store={application.directoryBrowsingStore}>
@@ -224,6 +293,8 @@ export function App() {
       </DirectoryBrowsingProvider>
       </PreviewProvider>
       </UpdatesProvider>
+      </SearchProvider>
+      </CommandPaletteProvider>
       </SettingsProvider>
     </ToastProvider>
   );

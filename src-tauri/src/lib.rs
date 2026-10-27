@@ -33,6 +33,8 @@ use domains::file_preview::application::{
 use domains::file_preview::infrastructure::StdPreviewSource;
 use domains::file_transfer::application::{TransferEntries, TransferEntriesUseCase};
 use domains::file_transfer::infrastructure::StdTransferFileSystem;
+use domains::folder_search::application::{SearchFolder, SearchFolderUseCase};
+use domains::folder_search::infrastructure::StdFolderWalker;
 use domains::places::application::{ListPlaces, ListPlacesUseCase};
 use domains::places::infrastructure::OsPlacesProvider;
 use domains::settings::application::{
@@ -95,6 +97,11 @@ pub fn run() {
     let summarize_folder: Arc<dyn SummarizeFolderUseCase> =
         Arc::new(SummarizeFolder::new(preview_source));
 
+    let search_folder: Arc<dyn SearchFolderUseCase> =
+        Arc::new(SearchFolder::new(Arc::new(StdFolderWalker)));
+    let search_sessions =
+        Arc::new(interface::tauri::folder_search::sessions::SearchSessions::default());
+
     let builder = ::tauri::Builder::default()
         .setup(|app| {
             let update_source = Arc::new(TauriUpdateSource::new(app.handle().clone()));
@@ -130,7 +137,9 @@ pub fn run() {
         .manage(load_settings)
         .manage(save_settings)
         .manage(read_text_preview)
-        .manage(summarize_folder);
+        .manage(summarize_folder)
+        .manage(search_folder)
+        .manage(search_sessions);
 
     #[cfg(desktop)]
     let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
@@ -157,7 +166,9 @@ pub fn run() {
             interface::tauri::app_updates::commands::check_for_update,
             interface::tauri::app_updates::commands::download_update,
             interface::tauri::app_updates::commands::install_update_and_restart,
-            interface::tauri::app_updates::commands::open_release_page
+            interface::tauri::app_updates::commands::open_release_page,
+            interface::tauri::folder_search::commands::start_search,
+            interface::tauri::folder_search::commands::cancel_search
         ])
         .run(::tauri::generate_context!())
         .expect("error while running tauri application");

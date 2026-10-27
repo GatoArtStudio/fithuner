@@ -5,6 +5,7 @@ use std::time::UNIX_EPOCH;
 
 use crate::domains::directory_browsing::application::FileSystemPort;
 use crate::domains::directory_browsing::domain::{FileEntry, FileEntryKind, FileSystemError};
+use crate::domains::shared_kernel::filesystem::is_hidden_entry;
 
 pub struct StdFileSystem;
 
@@ -40,7 +41,7 @@ fn build_file_entry(path: &Path) -> Option<FileEntry> {
     let name = path.file_name()?.to_string_lossy().into_owned();
 
     Some(FileEntry {
-        is_hidden: is_hidden(&name, &metadata),
+        is_hidden: is_hidden_entry(&name, &metadata),
         name,
         path: path.to_path_buf(),
         kind: if metadata.is_dir() {
@@ -58,18 +59,6 @@ fn modified_at_millis(metadata: &Metadata) -> Option<u64> {
     let modified = metadata.modified().ok()?;
     let elapsed = modified.duration_since(UNIX_EPOCH).ok()?;
     u64::try_from(elapsed.as_millis()).ok()
-}
-
-#[cfg(windows)]
-fn is_hidden(name: &str, metadata: &Metadata) -> bool {
-    use std::os::windows::fs::MetadataExt;
-    const FILE_ATTRIBUTE_HIDDEN: u32 = 0x2;
-    name.starts_with('.') || metadata.file_attributes() & FILE_ATTRIBUTE_HIDDEN != 0
-}
-
-#[cfg(not(windows))]
-fn is_hidden(name: &str, _metadata: &Metadata) -> bool {
-    name.starts_with('.')
 }
 
 fn map_io_error(error: io::Error) -> FileSystemError {

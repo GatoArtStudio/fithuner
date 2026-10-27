@@ -4,6 +4,7 @@ pub mod file_clipboard;
 pub mod file_operations;
 pub mod file_preview;
 pub mod file_transfer;
+pub mod folder_search;
 pub mod places;
 pub mod settings;
 pub mod shared_kernel;
