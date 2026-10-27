@@ -25,6 +25,7 @@ pub fn start_search(
     let returned_id = search_id.clone();
 
     thread::spawn(move || {
+        let started_at = Instant::now();
         let mut batcher = MatchBatcher::new();
         let emit_matches = |matches: Vec<SearchMatchDto>| {
             let _ = app.emit(
@@ -51,6 +52,17 @@ pub fn start_search(
             emit_matches(leftovers);
         }
         sessions.remove(&search_id);
+        match &result {
+            Ok(summary) => log::info!(
+                "Search {search_id} finished in {:?}: {} matches, {} entries scanned, truncated {}, cancelled {}",
+                started_at.elapsed(),
+                summary.total_matches,
+                summary.scanned_entries,
+                summary.is_truncated,
+                summary.was_cancelled
+            ),
+            Err(error) => log::warn!("Search {search_id} failed: {error}"),
+        }
         let _ = app.emit(
             FINISHED_EVENT,
             SearchFinishedDto::from_result(&search_id, result),
