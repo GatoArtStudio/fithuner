@@ -1,9 +1,9 @@
 use super::preview_mapper::{preview_to_domain, preview_to_model};
 use crate::domains::settings::domain::{
-    AppSettings, AppearanceSettings, BrowsingSettings, ThemePreference,
+    AppSettings, AppearanceSettings, BrowsingSettings, ThemePreference, UpdateSettings,
 };
 use crate::domains::settings::infrastructure::persistence::models::{
-    AppearanceModel, BrowsingModel, SettingsModel, ThemeModel,
+    AppearanceModel, BrowsingModel, SettingsModel, ThemeModel, UpdatesModel,
 };
 
 pub const CURRENT_SCHEMA_VERSION: u32 = 1;
@@ -23,6 +23,10 @@ pub fn to_model(settings: &AppSettings) -> SettingsModel {
             confirm_before_trash: settings.browsing.confirm_before_trash,
         },
         preview: preview_to_model(&settings.preview),
+        updates: UpdatesModel {
+            check_on_startup: settings.updates.check_on_startup,
+            auto_download: settings.updates.auto_download,
+        },
     }
 }
 
@@ -40,6 +44,10 @@ pub fn to_domain(model: SettingsModel) -> AppSettings {
             confirm_before_trash: model.browsing.confirm_before_trash,
         },
         preview: preview_to_domain(model.preview),
+        updates: UpdateSettings {
+            check_on_startup: model.updates.check_on_startup,
+            auto_download: model.updates.auto_download,
+        },
     }
 }
 
@@ -61,6 +69,10 @@ mod tests {
             preview: PreviewSettings {
                 quick_look_enabled: false,
                 ..PreviewSettings::default()
+            },
+            updates: UpdateSettings {
+                check_on_startup: false,
+                auto_download: true,
             },
         };
 

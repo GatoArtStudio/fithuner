@@ -1,10 +1,13 @@
-use crate::domains::settings::domain::{AppearanceSettings, BrowsingSettings, PreviewSettings};
+use crate::domains::settings::domain::{
+    AppearanceSettings, BrowsingSettings, PreviewSettings, UpdateSettings,
+};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AppSettings {
     pub appearance: AppearanceSettings,
     pub browsing: BrowsingSettings,
     pub preview: PreviewSettings,
+    pub updates: UpdateSettings,
 }
 
 #[cfg(test)]
@@ -19,6 +22,14 @@ mod tests {
         assert_eq!(settings.appearance.theme, ThemePreference::System);
         assert!(!settings.browsing.show_hidden_files);
         assert!(!settings.browsing.confirm_before_trash);
+    }
+
+    #[test]
+    fn updates_are_checked_at_startup_but_never_installed_automatically() {
+        let updates = AppSettings::default().updates;
+
+        assert!(updates.check_on_startup);
+        assert!(!updates.auto_download);
     }
 
     #[test]

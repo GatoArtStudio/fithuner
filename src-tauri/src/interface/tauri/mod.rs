@@ -1,3 +1,4 @@
+pub mod app_updates;
 pub mod directory_browsing;
 pub mod file_clipboard;
 pub mod file_operations;

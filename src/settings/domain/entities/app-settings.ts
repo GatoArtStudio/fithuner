@@ -41,10 +41,16 @@ export interface PreviewSettings {
   providers: PreviewProvidersSettings;
 }
 
+export interface UpdateSettings {
+  checkOnStartup: boolean;
+  autoDownload: boolean;
+}
+
 export interface AppSettings {
   appearance: AppearanceSettings;
   browsing: BrowsingSettings;
   preview: PreviewSettings;
+  updates: UpdateSettings;
 }
 
 export type PreviewProvidersPatch = {
@@ -59,9 +65,10 @@ export interface SettingsPatch {
   appearance?: Partial<AppearanceSettings>;
   browsing?: Partial<BrowsingSettings>;
   preview?: PreviewPatch;
+  updates?: Partial<UpdateSettings>;
 }
 
-export type SettingsSection = "general" | "appearance" | "preview";
+export type SettingsSection = "general" | "appearance" | "preview" | "updates";
 
 export const DEFAULT_SETTINGS: AppSettings = {
   appearance: { theme: "system" },
@@ -84,4 +91,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
       folder: { enabled: true },
     },
   },
+  updates: { checkOnStartup: true, autoDownload: false },
 };

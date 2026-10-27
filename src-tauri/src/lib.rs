@@ -3,6 +3,15 @@ mod interface;
 
 use std::sync::Arc;
 
+use ::tauri::Manager;
+
+use domains::app_updates::application::{
+    CheckForUpdate, CheckForUpdateUseCase, DownloadUpdate, DownloadUpdateUseCase, InstallUpdate,
+    InstallUpdateUseCase, OpenReleasePage, OpenReleasePageUseCase,
+};
+use domains::app_updates::infrastructure::{
+    SystemLinkOpener, TauriApplicationRestarter, TauriUpdateSource,
+};
 use domains::directory_browsing::application::{ListDirectory, ListDirectoryUseCase};
 use domains::directory_browsing::infrastructure::StdFileSystem;
 use domains::file_clipboard::application::{
@@ -30,6 +39,7 @@ use domains::settings::application::{
     LoadSettings, LoadSettingsUseCase, SaveSettings, SaveSettingsUseCase,
 };
 use domains::settings::infrastructure::JsonSettingsRepository;
+use interface::tauri::app_updates::commands::DownloadInProgress;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -85,7 +95,26 @@ pub fn run() {
     let summarize_folder: Arc<dyn SummarizeFolderUseCase> =
         Arc::new(SummarizeFolder::new(preview_source));
 
-    ::tauri::Builder::default()
+    let builder = ::tauri::Builder::default()
+        .setup(|app| {
+            let update_source = Arc::new(TauriUpdateSource::new(app.handle().clone()));
+            let restarter = Arc::new(TauriApplicationRestarter::new(app.handle().clone()));
+            let check_for_update: Arc<dyn CheckForUpdateUseCase> =
+                Arc::new(CheckForUpdate::new(update_source.clone()));
+            let download_update: Arc<dyn DownloadUpdateUseCase> =
+                Arc::new(DownloadUpdate::new(update_source.clone()));
+            let install_update: Arc<dyn InstallUpdateUseCase> =
+                Arc::new(InstallUpdate::new(update_source, restarter));
+            let open_release_page: Arc<dyn OpenReleasePageUseCase> =
+                Arc::new(OpenReleasePage::new(Arc::new(SystemLinkOpener)));
+
+            app.manage(check_for_update);
+            app.manage(download_update);
+            app.manage(install_update);
+            app.manage(open_release_page);
+            app.manage(Arc::new(DownloadInProgress::default()));
+            Ok(())
+        })
         .manage(list_directory)
         .manage(list_places)
         .manage(open_entry)
@@ -101,7 +130,12 @@ pub fn run() {
         .manage(load_settings)
         .manage(save_settings)
         .manage(read_text_preview)
-        .manage(summarize_folder)
+        .manage(summarize_folder);
+
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+
+    builder
         .invoke_handler(::tauri::generate_handler![
             interface::tauri::directory_browsing::commands::list_directory,
             interface::tauri::places::commands::list_places,
@@ -119,7 +153,11 @@ pub fn run() {
             interface::tauri::settings::commands::load_settings,
             interface::tauri::settings::commands::save_settings,
             interface::tauri::file_preview::commands::read_text_preview,
-            interface::tauri::file_preview::commands::summarize_folder
+            interface::tauri::file_preview::commands::summarize_folder,
+            interface::tauri::app_updates::commands::check_for_update,
+            interface::tauri::app_updates::commands::download_update,
+            interface::tauri::app_updates::commands::install_update_and_restart,
+            interface::tauri::app_updates::commands::open_release_page
         ])
         .run(::tauri::generate_context!())
         .expect("error while running tauri application");

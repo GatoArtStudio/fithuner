@@ -3,6 +3,7 @@ import {
   tauriDirectoryGateway,
 } from "../directory-browsing";
 import { bindSettings } from "./bind-settings";
+import { createUpdatesStore, tauriUpdatesGateway } from "../app-updates";
 import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
 import { createFileTransferStore, isValidDropTarget, tauriFileTransferGateway } from "../file-transfer";
@@ -73,15 +74,26 @@ export function composeApplication() {
     const unsubscribes = await Promise.all([
       tauriFileTransferGateway.subscribeToTransfers(fileTransferStore.getState().handleEvent),
       tauriFileTransferGateway.subscribeToExternalDrags(fileTransferStore.getState().handleExternalDrag),
+      tauriUpdatesGateway.subscribeToDownload(updatesStore.getState().handleDownloadEvent),
     ]);
     return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
   }
 
   const previewStore = createPreviewStore();
+  const updatesStore = createUpdatesStore({
+    gateway: tauriUpdatesGateway,
+    shouldCheckOnStartup: () => settingsStore.getState().settings.updates.checkOnStartup,
+    shouldDownloadAutomatically: () => settingsStore.getState().settings.updates.autoDownload,
+    notifyReady: (version) =>
+      toastStore
+        .getState()
+        .push(`Version ${version} is ready to install. Open Settings > Updates to restart.`, "info"),
+  });
 
   return {
     toastStore,
     previewStore,
+    updatesStore,
     previewGateway: tauriPreviewGateway,
     settingsStore,
     directoryBrowsingStore,
