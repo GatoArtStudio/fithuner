@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useDragAndDropConfig } from "./DragAndDropContext";
+import { blockSelection } from "./block-selection";
 import { findDropTargetAt, highlightDropTarget } from "./drop-targets";
 
 const DRAG_START_DISTANCE_PX = 5;
@@ -25,6 +26,7 @@ export function useDragSource() {
       let isDragging = false;
       let hoverPath: string | null = null;
       let isCopy = false;
+      const releaseSelection = blockSelection();
 
       function resolveHover(event: PointerEvent) {
         isCopy = event.ctrlKey || event.metaKey;
@@ -57,6 +59,7 @@ export function useDragSource() {
         window.removeEventListener("pointercancel", handleCancel);
         window.removeEventListener("keydown", handleKeyDown, true);
         window.removeEventListener("blur", handleCancel);
+        releaseSelection();
         if (!isDragging) return;
 
         const dropTarget = hoverPath;

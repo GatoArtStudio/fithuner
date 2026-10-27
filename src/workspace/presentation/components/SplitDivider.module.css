@@ -1,0 +1,15 @@
+.divider {
+  position: relative;
+  width: 6px;
+  background: var(--color-border);
+  cursor: col-resize;
+  touch-action: none;
+  transition: background var(--motion-fast) var(--motion-ease);
+}
+
+.divider:hover,
+.divider:focus-visible,
+.divider:active {
+  background: var(--color-accent);
+  outline: none;
+}

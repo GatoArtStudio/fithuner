@@ -151,7 +151,7 @@ export function createSearchStore({
 
       handleEvent: (event) => {
         if (activeSearchId === null) {
-          eventsBeforeId.push(event);
+          if (get().status.type === "searching") eventsBeforeId.push(event);
           return;
         }
         if (event.searchId === activeSearchId) applyEvent(event);

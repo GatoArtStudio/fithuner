@@ -8,6 +8,7 @@ A cross-platform file explorer focused on UI and UX, built with Tauri, React and
 - Copy, cut, paste and move with progress, cancellation and conflict resolution (replace, skip, keep both)
 - Drag and drop between folders, the sidebar and breadcrumbs, and drop files from other apps to copy them
 - System clipboard integration for files
+- Tabs and a split view with two panes side by side: every tab keeps its own folder, history, selection and search, and files can be dragged or sent from one pane to the other
 - Search by name in the current folder and its subfolders, with type filters and results that stream in while the search runs
 - Command palette (`Ctrl+K`) to run any command, jump to a folder or place, or type a path
 - Configurable file preview in a resizable side or bottom panel, plus Quick Look with `Space`: images, text and code with syntax highlighting, Markdown, JSON, CSV, PDF, audio, video and folders
@@ -53,6 +54,11 @@ pnpm tauri dev
 | `Menu` / `Shift+F10` / right click | Context menu |
 | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` | Copy / cut / paste files |
 | `Ctrl+,` | Open settings |
+| `Ctrl+T` / `Ctrl+W` | New tab / close tab |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` (or `Ctrl+PageDown` / `Ctrl+PageUp`) | Next / previous tab |
+| `Ctrl+1` ... `Ctrl+9` | Go to that tab (`Ctrl+9` goes to the last one) |
+| `Ctrl+\` | Split view on / off |
+| `F6` | Switch to the other pane |
 | `Ctrl+F` | Search this folder and its subfolders |
 | `Ctrl+K` / `Ctrl+Shift+P` | Command palette |
 | `Space` | Quick Look of the selected file (`↑` `↓` browse, `Space` or `Esc` close) |
@@ -65,6 +71,14 @@ pnpm tauri dev
 - Copied files go to the system clipboard, so you can paste them in other file managers. The "cut" state is only known to Fithuner: pasting cut files elsewhere copies them.
 - On Linux the clipboard works on X11 and Wayland. If the system clipboard is unavailable, Fithuner keeps the files in memory so copy and paste still work inside the app.
 - Dragging files out of Fithuner into other apps is not supported yet.
+
+## Tabs and split view
+- Each pane has its own tab bar. A new tab opens in the folder you are in; right click a tab to duplicate it, move it to the other pane or close the others. Middle click closes a tab and dragging reorders it, or moves it to the other pane when dropped on that pane's tab bar.
+- `Ctrl+\` (or the split button in the toolbar) opens a second pane on the right and `Ctrl+\` again merges the tabs back. Drag the divider, or focus it and use `←` `→`, to resize the panes between 20% and 80%.
+- The pane you click is the active one: the sidebar, the preview panel, Quick Look, the keyboard shortcuts and the command palette work on its current tab.
+- Drag files onto the other pane (its empty area drops into its current folder), or use "Copy to the other pane" and "Move to the other pane" in the command palette.
+- Changes made in one pane refresh every pane, so a folder open in both always shows the latest files.
+- The tabs are not restored when you restart the app yet.
 
 ## Search
 - `Ctrl+F` opens the search bar. Type to search by name (case and accents are ignored; every word must appear in the name). Results appear as they are found and show the folder they are in.

@@ -1,43 +1,39 @@
 import { expandHome, isPathLike, type PaletteItem } from "../command-palette";
-import type { DirectoryBrowsingStore } from "../directory-browsing";
 import type { FileClipboardStore } from "../file-clipboard";
 import { fileNameOf, type FileOperationsStore } from "../file-operations";
 import type { PreviewStore } from "../file-preview";
-import type { SearchStore } from "../folder-search";
-import { selectCanGoBack, selectCanGoForward, type NavigationStore } from "../navigation";
+import { selectCanGoBack, selectCanGoForward, type PlacesStore } from "../navigation";
 import type { SettingsStore } from "../settings";
 import type { UpdatesStore } from "../app-updates";
+import type { FileTransferStore } from "../file-transfer";
+import type { WorkspaceStore } from "../workspace";
+import type { BrowsingSession } from "./browsing-session";
+import { command } from "./palette-command";
+import { buildWorkspaceCommands } from "./palette-workspace-commands";
+
+export type PaletteSession = Pick<BrowsingSession, "directoryBrowsingStore" | "navigationStore" | "searchStore">;
 
 export interface PaletteStores {
-  directoryBrowsingStore: DirectoryBrowsingStore;
-  navigationStore: NavigationStore;
+  activeSession: () => PaletteSession;
+  placesStore: PlacesStore;
   fileOperationsStore: FileOperationsStore;
   fileClipboardStore: FileClipboardStore;
   settingsStore: SettingsStore;
   previewStore: PreviewStore;
   updatesStore: UpdatesStore;
-  searchStore: SearchStore;
+  workspaceStore: WorkspaceStore<BrowsingSession>;
+  fileTransferStore: FileTransferStore;
 }
 
 const RECENT_FOLDERS_LIMIT = 10;
 
-interface CommandOptions {
-  shortcut?: string;
-  keywords?: string[];
-  isAvailable?: boolean;
-}
-
-function command(id: string, title: string, run: () => void, options: CommandOptions = {}): PaletteItem | null {
-  if (options.isAvailable === false) return null;
-  return { id: `command:${id}`, title, group: "commands", run, shortcut: options.shortcut, keywords: options.keywords };
-}
-
 function buildCommands(stores: PaletteStores): PaletteItem[] {
-  const directory = stores.directoryBrowsingStore.getState();
-  const navigation = stores.navigationStore.getState();
+  const session = stores.activeSession();
+  const directory = session.directoryBrowsingStore.getState();
+  const navigation = session.navigationStore.getState();
   const settings = stores.settingsStore.getState();
   const preview = settings.settings.preview;
-  const isSearchOpen = stores.searchStore.getState().isOpen;
+  const isSearchOpen = session.searchStore.getState().isOpen;
   const hasSelection = directory.selectedPaths.length > 0 && !isSearchOpen;
   const { fileOperationsStore, fileClipboardStore } = stores;
 
@@ -118,7 +114,7 @@ function buildCommands(stores: PaletteStores): PaletteItem[] {
       isAvailable: !isSearchOpen,
     }),
     command("sort-type", "Sort by type", () => directory.toggleSort("type"), { keywords: ["order"], isAvailable: !isSearchOpen }),
-    command("search", "Search in this folder", () => stores.searchStore.getState().open(), {
+    command("search", "Search in this folder", () => session.searchStore.getState().open(), {
       shortcut: "Ctrl+F",
       keywords: ["find"],
     }),
@@ -134,13 +130,15 @@ function buildCommands(stores: PaletteStores): PaletteItem[] {
     ),
   ];
 
-  return commands.filter((item): item is PaletteItem => item !== null);
+  return [...commands, ...buildWorkspaceCommands(stores)].filter((item): item is PaletteItem => item !== null);
 }
 
 function buildPlaces(stores: PaletteStores): PaletteItem[] {
-  const { places, history } = stores.navigationStore.getState();
-  const navigateTo = (path: string) => () => void stores.navigationStore.getState().navigateTo(path);
-  const currentPath = stores.directoryBrowsingStore.getState().listing?.path;
+  const session = stores.activeSession();
+  const { history } = session.navigationStore.getState();
+  const { places } = stores.placesStore.getState();
+  const navigateTo = (path: string) => () => void session.navigationStore.getState().navigateTo(path);
+  const currentPath = session.directoryBrowsingStore.getState().listing?.path;
 
   const placeItems: PaletteItem[] = places.map((place) => ({
     id: `place:${place.path}`,
@@ -170,9 +168,10 @@ function buildPlaces(stores: PaletteStores): PaletteItem[] {
 function buildTypedTextItems(stores: PaletteStores, query: string): PaletteItem[] {
   const text = query.trim();
   if (text === "") return [];
+  const session = stores.activeSession();
 
   if (isPathLike(text)) {
-    const homePath = stores.navigationStore.getState().places.find((place) => place.kind === "home")?.path ?? null;
+    const homePath = stores.placesStore.getState().places.find((place) => place.kind === "home")?.path ?? null;
     const path = expandHome(text, homePath);
     return [
       {
@@ -181,19 +180,19 @@ function buildTypedTextItems(stores: PaletteStores, query: string): PaletteItem[
         subtitle: "Open this folder",
         group: "go-to-path",
         alwaysVisible: true,
-        run: () => void stores.navigationStore.getState().navigateTo(path),
+        run: () => void session.navigationStore.getState().navigateTo(path),
       },
     ];
   }
 
-  const folderName = fileNameOf(stores.directoryBrowsingStore.getState().listing?.path ?? "/") || "this folder";
+  const folderName = fileNameOf(session.directoryBrowsingStore.getState().listing?.path ?? "/") || "this folder";
   return [
     {
       id: "search-for-text",
       title: `Search for “${text}” in ${folderName}`,
       group: "search",
       alwaysVisible: true,
-      run: () => stores.searchStore.getState().open(text),
+      run: () => session.searchStore.getState().open(text),
     },
   ];
 }

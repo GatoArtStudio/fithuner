@@ -3,11 +3,31 @@ import { createUpdatesStore } from "../app-updates";
 import { createDirectoryBrowsingStore } from "../directory-browsing";
 import { createFileClipboardStore } from "../file-clipboard";
 import { createFileOperationsStore } from "../file-operations";
+import { createFileTransferStore } from "../file-transfer";
 import { createPreviewStore } from "../file-preview";
 import { createSearchStore } from "../folder-search";
-import { createNavigationStore } from "../navigation";
+import { createNavigationStore, createPlacesStore } from "../navigation";
 import { createSettingsStore } from "../settings";
+import { createWorkspaceStore, selectActiveSession } from "../workspace";
+import type { BrowsingSession } from "./browsing-session";
 import { buildPaletteItems, type PaletteStores } from "./palette-sources";
+
+function createSecondSession(startPath: string): BrowsingSession {
+  const directoryBrowsingStore = createDirectoryBrowsingStore({
+    listDirectory: vi.fn().mockImplementation(async (path?: string) => ({
+      path: path ?? startPath,
+      parentPath: null,
+      entries: [],
+    })),
+  });
+  const navigationStore = createNavigationStore({ openDirectory: directoryBrowsingStore.getState().openDirectory });
+  const searchStore = createSearchStore({
+    gateway: { startSearch: vi.fn(), cancelSearch: vi.fn(), subscribe: vi.fn() },
+    currentDirectoryPath: () => directoryBrowsingStore.getState().listing?.path ?? null,
+  });
+  void navigationStore.getState().navigateTo(startPath);
+  return { id: `other-${startPath}`, directoryBrowsingStore, navigationStore, searchStore, dispose: () => {} };
+}
 
 async function createStores() {
   const directoryBrowsingStore = createDirectoryBrowsingStore({
@@ -17,13 +37,15 @@ async function createStores() {
       entries: [],
     })),
   });
-  const navigationStore = createNavigationStore({
+  const placesStore = createPlacesStore({
     placesGateway: {
       listPlaces: async () => [
         { label: "Home", path: "/home/ana", kind: "home" },
         { label: "Documents", path: "/home/ana/Documents", kind: "documents" },
       ],
     },
+  });
+  const navigationStore = createNavigationStore({
     openDirectory: directoryBrowsingStore.getState().openDirectory,
   });
   const directory = {
@@ -32,9 +54,42 @@ async function createStores() {
     refresh: async () => {},
     selectEntry: () => {},
   };
-  const stores: PaletteStores = {
+  const searchStore = createSearchStore({
+    gateway: { startSearch: vi.fn().mockResolvedValue("s1"), cancelSearch: vi.fn(), subscribe: vi.fn() },
+    currentDirectoryPath: () => directoryBrowsingStore.getState().listing?.path ?? null,
+  });
+  const session: BrowsingSession = {
+    id: "main",
     directoryBrowsingStore,
     navigationStore,
+    searchStore,
+    dispose: () => {},
+  };
+  let createdSessions = 0;
+  const workspaceStore = createWorkspaceStore<BrowsingSession>({
+    createSession: (startPath) => (createdSessions++ === 0 ? session : createSecondSession(startPath ?? "/other")),
+    disposeSession: (created) => created.dispose(),
+    currentPathOf: (created) => created.directoryBrowsingStore.getState().listing?.path,
+  });
+  const startTransfer = vi.fn();
+  const fileTransferStore = createFileTransferStore({
+    gateway: {
+      startTransfer: startTransfer.mockResolvedValue("t1"),
+      cancelTransfer: vi.fn(),
+      resolveConflict: vi.fn(),
+      subscribeToTransfers: vi.fn(),
+      subscribeToExternalDrags: vi.fn(),
+    },
+    refreshDirectory: async () => {},
+    resolveDropTargetAt: () => null,
+    currentDirectoryPath: () => null,
+    notify: vi.fn(),
+  });
+  const stores: PaletteStores = {
+    activeSession: () => selectActiveSession(workspaceStore.getState()),
+    workspaceStore,
+    fileTransferStore,
+    placesStore,
     fileOperationsStore: createFileOperationsStore({
       gateway: {
         openEntry: vi.fn(),
@@ -68,14 +123,10 @@ async function createStores() {
       shouldCheckOnStartup: () => true,
       shouldDownloadAutomatically: () => false,
     }),
-    searchStore: createSearchStore({
-      gateway: { startSearch: vi.fn().mockResolvedValue("s1"), cancelSearch: vi.fn(), subscribe: vi.fn() },
-      currentDirectoryPath: () => directoryBrowsingStore.getState().listing?.path ?? null,
-    }),
   };
-  await navigationStore.getState().loadPlaces();
+  await placesStore.getState().load();
   await navigationStore.getState().navigateTo("/home/ana");
-  return stores;
+  return { ...stores, ...session, startTransfer };
 }
 
 const titles = (items: { title: string }[]) => items.map((item) => item.title);
@@ -214,5 +265,74 @@ describe("buildPaletteItems", () => {
 
     expect(items).not.toContain("Toggle preview panel");
     expect(items).not.toContain("Quick Look");
+  });
+
+  describe("tabs and split view commands", () => {
+    it("offers to open and split but not the commands that need more tabs or panes", async () => {
+      const stores = await createStores();
+
+      const items = titles(buildPaletteItems(stores, ""));
+
+      expect(items).toEqual(expect.arrayContaining(["New tab", "Duplicate tab", "Split view"]));
+      expect(items).not.toContain("Close tab");
+      expect(items).not.toContain("Next tab");
+      expect(items).not.toContain("Switch to the other pane");
+      expect(items).not.toContain("Copy to the other pane");
+    });
+
+    it("adds the tab commands once there are several tabs", async () => {
+      const stores = await createStores();
+      stores.workspaceStore.getState().newTab();
+
+      const items = titles(buildPaletteItems(stores, ""));
+
+      expect(items).toEqual(expect.arrayContaining(["Close tab", "Close other tabs", "Next tab", "Previous tab"]));
+    });
+
+    it("runs new tab through the workspace", async () => {
+      const stores = await createStores();
+
+      find(buildPaletteItems(stores, ""), "command:new-tab")?.run();
+
+      expect(stores.workspaceStore.getState().workspace.panes[0].tabs).toHaveLength(2);
+    });
+
+    it("names the split command after what it will do and offers the pane commands", async () => {
+      const stores = await createStores();
+
+      find(buildPaletteItems(stores, ""), "command:split")?.run();
+      const items = titles(buildPaletteItems(stores, ""));
+
+      expect(items).toEqual(expect.arrayContaining(["Close split view", "Switch to the other pane", "Move tab to the other pane"]));
+      expect(items).not.toContain("Split view");
+    });
+
+    it("copies and moves the selection to the folder of the other pane", async () => {
+      const stores = await createStores();
+      stores.workspaceStore.getState().toggleSplit();
+      stores.workspaceStore.getState().switchPane();
+      await vi.waitFor(() => {
+        const [, second] = stores.workspaceStore.getState().workspace.panes;
+        expect(stores.workspaceStore.getState().sessions[second.tabs[0].sessionId].directoryBrowsingStore.getState().listing).not.toBeNull();
+      });
+      stores.directoryBrowsingStore.getState().selectOnly("/home/ana/a.txt");
+
+      find(buildPaletteItems(stores, ""), "command:copy-to-other-pane")?.run();
+      find(buildPaletteItems(stores, ""), "command:move-to-other-pane")?.run();
+
+      expect(stores.startTransfer).toHaveBeenNthCalledWith(1, {
+        sources: ["/home/ana/a.txt"],
+        destinationDirectory: "/home/ana",
+        mode: "copy",
+      });
+      expect(stores.startTransfer).toHaveBeenNthCalledWith(2, expect.objectContaining({ mode: "move" }));
+    });
+
+    it("does not offer pane transfers without a selection", async () => {
+      const stores = await createStores();
+      stores.workspaceStore.getState().toggleSplit();
+
+      expect(titles(buildPaletteItems(stores, ""))).not.toContain("Copy to the other pane");
+    });
   });
 });
