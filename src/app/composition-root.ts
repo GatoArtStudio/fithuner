@@ -1,9 +1,11 @@
 import { tauriDirectoryGateway } from "../directory-browsing";
+import { bindFolderWatching } from "./bind-folder-watching";
 import { buildPaletteItems } from "./palette-sources";
 import { createBrowsingSessionFactory, type BrowsingSession } from "./browsing-session";
 import { createUpdatesStore, tauriUpdatesGateway } from "../app-updates";
 import { createCommandPaletteStore } from "../command-palette";
 import { tauriSearchGateway } from "../folder-search";
+import { tauriFolderWatchGateway } from "../folder-watching";
 import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
 import { createFileTransferStore, isMoveWithinSameFolder, isValidDropTarget, tauriFileTransferGateway } from "../file-transfer";
@@ -31,6 +33,11 @@ export function composeApplication() {
     createSession: createBrowsingSession,
     disposeSession: (session) => session.dispose(),
     currentPathOf: (session) => session.directoryBrowsingStore.getState().listing?.path,
+  });
+  const folderWatching = bindFolderWatching({
+    workspaceStore,
+    settingsStore,
+    gateway: tauriFolderWatchGateway,
   });
   const activeSession = () => selectActiveSession(workspaceStore.getState());
   const activeDirectory = () => activeSession().directoryBrowsingStore.getState();
@@ -87,6 +94,7 @@ export function composeApplication() {
       tauriFileTransferGateway.subscribeToTransfers(fileTransferStore.getState().handleEvent),
       tauriFileTransferGateway.subscribeToExternalDrags(fileTransferStore.getState().handleExternalDrag),
       tauriUpdatesGateway.subscribeToDownload(updatesStore.getState().handleDownloadEvent),
+      tauriFolderWatchGateway.subscribe(folderWatching.handleFolderChanged),
       tauriSearchGateway.subscribe((event) => {
         for (const session of Object.values(workspaceStore.getState().sessions)) {
           session.searchStore.getState().handleEvent(event);
