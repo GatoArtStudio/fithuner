@@ -2,8 +2,10 @@ import {
   createDirectoryBrowsingStore,
   tauriDirectoryGateway,
 } from "../directory-browsing";
+import { bindSearch } from "./bind-search";
 import { bindSettings } from "./bind-settings";
 import { createUpdatesStore, tauriUpdatesGateway } from "../app-updates";
+import { createSearchStore, tauriSearchGateway } from "../folder-search";
 import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
 import { createFileTransferStore, isValidDropTarget, tauriFileTransferGateway } from "../file-transfer";
@@ -75,11 +77,17 @@ export function composeApplication() {
       tauriFileTransferGateway.subscribeToTransfers(fileTransferStore.getState().handleEvent),
       tauriFileTransferGateway.subscribeToExternalDrags(fileTransferStore.getState().handleExternalDrag),
       tauriUpdatesGateway.subscribeToDownload(updatesStore.getState().handleDownloadEvent),
+      tauriSearchGateway.subscribe(searchStore.getState().handleEvent),
     ]);
     return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
   }
 
   const previewStore = createPreviewStore();
+  const searchStore = createSearchStore({
+    gateway: tauriSearchGateway,
+    currentDirectoryPath: () => directoryBrowsingStore.getState().listing?.path ?? null,
+  });
+  bindSearch({ searchStore, directoryBrowsingStore });
   const updatesStore = createUpdatesStore({
     gateway: tauriUpdatesGateway,
     shouldCheckOnStartup: () => settingsStore.getState().settings.updates.checkOnStartup,
@@ -94,6 +102,7 @@ export function composeApplication() {
     toastStore,
     previewStore,
     updatesStore,
+    searchStore,
     previewGateway: tauriPreviewGateway,
     settingsStore,
     directoryBrowsingStore,

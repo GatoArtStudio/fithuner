@@ -1,0 +1,6 @@
+.match {
+  border-radius: 3px;
+  background: var(--color-selection);
+  color: inherit;
+  font-weight: 600;
+}
