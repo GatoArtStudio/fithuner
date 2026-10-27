@@ -36,6 +36,19 @@ describe("SettingsView", () => {
     await vi.waitFor(() => expect(gateway.saveSettings).toHaveBeenCalled());
   });
 
+  it("turns tab restoring and folder watching on by default and lets the user switch them off", () => {
+    const { store } = renderView();
+    const restore = screen.getByRole("switch", { name: "Restore tabs on startup" });
+    const watch = screen.getByRole("switch", { name: "Update folders automatically" });
+    expect(restore.getAttribute("aria-checked")).toBe("true");
+    expect(watch.getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.click(restore);
+    fireEvent.click(watch);
+
+    expect(store.getState().settings.browsing).toMatchObject({ restoreTabsOnStartup: false, watchFolders: false });
+  });
+
   it("switches to the appearance section and changes the theme", () => {
     const { store } = renderView();
 

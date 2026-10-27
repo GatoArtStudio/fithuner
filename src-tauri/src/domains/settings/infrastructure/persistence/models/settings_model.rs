@@ -18,11 +18,24 @@ pub struct AppearanceModel {
     pub theme: ThemeModel,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct BrowsingModel {
     pub show_hidden_files: bool,
     pub confirm_before_trash: bool,
+    pub restore_tabs_on_startup: bool,
+    pub watch_folders: bool,
+}
+
+impl Default for BrowsingModel {
+    fn default() -> Self {
+        Self {
+            show_hidden_files: false,
+            confirm_before_trash: false,
+            restore_tabs_on_startup: true,
+            watch_folders: true,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]

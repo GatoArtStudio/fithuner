@@ -8,6 +8,7 @@ A cross-platform file explorer focused on UI and UX, built with Tauri, React and
 - Copy, cut, paste and move with progress, cancellation and conflict resolution (replace, skip, keep both)
 - Drag and drop between folders, the sidebar and breadcrumbs, and drop files from other apps to copy them
 - System clipboard integration for files
+- Folders refresh on their own when other programs change them, and your tabs come back after a restart
 - Tabs and a split view with two panes side by side: every tab keeps its own folder, history, selection and search, and files can be dragged or sent from one pane to the other
 - Search by name in the current folder and its subfolders, with type filters and results that stream in while the search runs
 - Command palette (`Ctrl+K`) to run any command, jump to a folder or place, or type a path
@@ -78,7 +79,11 @@ pnpm tauri dev
 - The pane you click is the active one: the sidebar, the preview panel, Quick Look, the keyboard shortcuts and the command palette work on its current tab.
 - Drag files onto the other pane (its empty area drops into its current folder), or use "Copy to the other pane" and "Move to the other pane" in the command palette.
 - Changes made in one pane refresh every pane, so a folder open in both always shows the latest files.
-- The tabs are not restored when you restart the app yet.
+- The next time you open Fithuner it brings back the tabs, folders, split view and divider position you had (history, sort order and selection start clean). A folder that no longer exists opens Home instead. Turn it off in Settings > General ("Restore tabs on startup").
+
+## Live folder updates
+- Folders that are open in any tab update by themselves when files are created, renamed or deleted by other programs, keeping your selection. Turn it off in Settings > General ("Update folders automatically").
+- Only the folders you are looking at are watched (not their subfolders). Some network or virtual file systems do not report changes; press `F5` there.
 
 ## Search
 - `Ctrl+F` opens the search bar. Type to search by name (case and accents are ignored; every word must appear in the name). Results appear as they are found and show the folder they are in.

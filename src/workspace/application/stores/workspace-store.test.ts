@@ -190,4 +190,46 @@ describe("workspace store", () => {
     expect(store.getState().workspace.splitRatio).toBe(0.8);
     expect(listener).toHaveBeenCalledTimes(1);
   });
+
+  describe("restoreLayout", () => {
+    const layout = {
+      panes: [
+        { paths: ["/a", "/b"], activeIndex: 1 },
+        { paths: ["/c"], activeIndex: 0 },
+      ],
+      activePaneIndex: 0,
+      splitRatio: 0.3,
+    };
+
+    it("opens one session per saved folder and rebuilds panes, active tab and ratio", () => {
+      const { store, created } = createFakeStore();
+
+      store.getState().restoreLayout(layout);
+
+      expect(created.slice(1).map((session) => session.startPath)).toEqual(["/a", "/b", "/c"]);
+      const { workspace } = store.getState();
+      expect(workspace.panes.map((pane) => pane.tabs.length)).toEqual([2, 1]);
+      expect(workspace.activePaneId).toBe(workspace.panes[0].id);
+      expect(workspace.panes[0].activeTabId).toBe(workspace.panes[0].tabs[1].id);
+      expect(workspace.splitRatio).toBe(0.3);
+      expect(selectActiveSession(store.getState()).startPath).toBe("/b");
+    });
+
+    it("disposes the initial session exactly once and keeps only the restored ones", () => {
+      const { store, disposed } = createFakeStore();
+
+      store.getState().restoreLayout(layout);
+
+      expect(disposed).toEqual(["s1"]);
+      expect(Object.keys(store.getState().sessions)).toEqual(["s2", "s3", "s4"]);
+    });
+
+    it("can restore a single pane", () => {
+      const { store } = createFakeStore();
+
+      store.getState().restoreLayout({ panes: [{ paths: ["/a"], activeIndex: 0 }], activePaneIndex: 0, splitRatio: 0.5 });
+
+      expect(store.getState().workspace.panes).toHaveLength(1);
+    });
+  });
 });

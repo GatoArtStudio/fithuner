@@ -36,6 +36,24 @@ describe("browsing session", () => {
     await vi.waitFor(() => expect(folderOf(data)).toBe("/data"));
   });
 
+  it("falls back to the home folder when the start folder cannot be opened", async () => {
+    const { settingsStore } = setup();
+    const createSession = createBrowsingSessionFactory({
+      settingsStore,
+      directoryGateway: {
+        listDirectory: vi.fn().mockImplementation(async (path?: string) => {
+          if (path === "/gone") throw { kind: "notFound", message: "gone" };
+          return { path: path ?? "/home/ana", parentPath: null, entries: [] };
+        }),
+      },
+      searchGateway: { startSearch: vi.fn(), cancelSearch: vi.fn(), subscribe: vi.fn() },
+    });
+
+    const session = createSession("/gone");
+
+    await vi.waitFor(() => expect(folderOf(session)).toBe("/home/ana"));
+  });
+
   it("keeps the folder, history and selection of each session independent", async () => {
     const { createSession } = setup();
     const first = createSession("/a");

@@ -1,5 +1,8 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
+import type { Pane } from "../../domain/entities/pane";
 import type { Workspace } from "../../domain/entities/workspace";
+import type { WorkspaceLayout } from "../../domain/entities/workspace-layout";
+import { clampSplitRatio } from "../../domain/services/workspace-layout";
 import {
   activatePane,
   activateTab,
@@ -45,6 +48,7 @@ export interface WorkspaceState<Session extends WorkspaceSession> {
   toggleSplit: () => void;
   switchPane: () => void;
   setSplitRatio: (ratio: number) => void;
+  restoreLayout: (layout: WorkspaceLayout) => void;
 }
 
 export type WorkspaceStore<Session extends WorkspaceSession> = StoreApi<WorkspaceState<Session>>;
@@ -154,6 +158,31 @@ export function createWorkspaceStore<Session extends WorkspaceSession>({
       },
 
       setSplitRatio: (ratio) => apply(setSplitRatio(get().workspace, ratio)),
+
+      restoreLayout: (layout) => {
+        const previousSessions = Object.values(get().sessions);
+        const restoredSessions: Session[] = [];
+
+        const panes = layout.panes.map((paneLayout): Pane => {
+          const tabs = paneLayout.paths.map((path) => {
+            const session = createSession(path);
+            restoredSessions.push(session);
+            return { id: generateId("tab"), sessionId: session.id };
+          });
+          return { id: generateId("pane"), tabs, activeTabId: tabs[paneLayout.activeIndex]?.id ?? tabs[0].id };
+        });
+        const activePane = panes[layout.activePaneIndex] ?? panes[0];
+
+        previousSessions.forEach(disposeSession);
+        set({
+          workspace: {
+            panes,
+            activePaneId: activePane.id,
+            splitRatio: clampSplitRatio(layout.splitRatio),
+          },
+          sessions: Object.fromEntries(restoredSessions.map((session) => [session.id, session])),
+        });
+      },
     };
   });
 }

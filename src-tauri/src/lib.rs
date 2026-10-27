@@ -3,7 +3,7 @@ mod interface;
 
 use std::sync::Arc;
 
-use ::tauri::Manager;
+use ::tauri::{Emitter, Manager};
 
 use domains::app_updates::application::{
     CheckForUpdate, CheckForUpdateUseCase, DownloadUpdate, DownloadUpdateUseCase, InstallUpdate,
@@ -35,6 +35,10 @@ use domains::file_transfer::application::{TransferEntries, TransferEntriesUseCas
 use domains::file_transfer::infrastructure::StdTransferFileSystem;
 use domains::folder_search::application::{SearchFolder, SearchFolderUseCase};
 use domains::folder_search::infrastructure::StdFolderWalker;
+use domains::folder_watching::application::{
+    FolderWatcherPort, UpdateWatchedFolders, UpdateWatchedFoldersUseCase,
+};
+use domains::folder_watching::infrastructure::{NoopFolderWatcher, NotifyFolderWatcher};
 use domains::places::application::{ListPlaces, ListPlacesUseCase};
 use domains::places::infrastructure::OsPlacesProvider;
 use domains::settings::application::{
@@ -42,6 +46,8 @@ use domains::settings::application::{
 };
 use domains::settings::infrastructure::JsonSettingsRepository;
 use interface::tauri::app_updates::commands::DownloadInProgress;
+use interface::tauri::folder_watching::commands::FOLDER_CHANGED_EVENT;
+use interface::tauri::folder_watching::dtos::FolderChangedDto;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -115,6 +121,26 @@ pub fn run() {
             let open_release_page: Arc<dyn OpenReleasePageUseCase> =
                 Arc::new(OpenReleasePage::new(Arc::new(SystemLinkOpener)));
 
+            let app_handle = app.handle().clone();
+            let folder_watcher: Arc<dyn FolderWatcherPort> =
+                match NotifyFolderWatcher::new(Arc::new(move |folder| {
+                    let _ = app_handle.emit(
+                        FOLDER_CHANGED_EVENT,
+                        FolderChangedDto {
+                            path: folder.to_string_lossy().into_owned(),
+                        },
+                    );
+                })) {
+                    Ok(watcher) => Arc::new(watcher),
+                    Err(error) => {
+                        log::warn!("Live folder updates are unavailable: {error}");
+                        Arc::new(NoopFolderWatcher)
+                    }
+                };
+            let update_watched_folders: Arc<dyn UpdateWatchedFoldersUseCase> =
+                Arc::new(UpdateWatchedFolders::new(folder_watcher));
+
+            app.manage(update_watched_folders);
             app.manage(check_for_update);
             app.manage(download_update);
             app.manage(install_update);
@@ -168,7 +194,8 @@ pub fn run() {
             interface::tauri::app_updates::commands::install_update_and_restart,
             interface::tauri::app_updates::commands::open_release_page,
             interface::tauri::folder_search::commands::start_search,
-            interface::tauri::folder_search::commands::cancel_search
+            interface::tauri::folder_search::commands::cancel_search,
+            interface::tauri::folder_watching::commands::watch_folders
         ])
         .run(::tauri::generate_context!())
         .expect("error while running tauri application");

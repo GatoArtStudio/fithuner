@@ -7,6 +7,8 @@ export interface AppearanceSettings {
 export interface BrowsingSettings {
   showHiddenFiles: boolean;
   confirmBeforeTrash: boolean;
+  restoreTabsOnStartup: boolean;
+  watchFolders: boolean;
 }
 
 export type PanelPosition = "right" | "bottom";
@@ -72,7 +74,12 @@ export type SettingsSection = "general" | "appearance" | "preview" | "updates";
 
 export const DEFAULT_SETTINGS: AppSettings = {
   appearance: { theme: "system" },
-  browsing: { showHiddenFiles: false, confirmBeforeTrash: false },
+  browsing: {
+    showHiddenFiles: false,
+    confirmBeforeTrash: false,
+    restoreTabsOnStartup: true,
+    watchFolders: true,
+  },
   preview: {
     panelEnabled: true,
     showPanel: true,
