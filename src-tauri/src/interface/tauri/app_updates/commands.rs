@@ -11,6 +11,7 @@ use super::dtos::{
 use crate::domains::app_updates::application::{
     CheckForUpdateUseCase, DownloadUpdateUseCase, InstallUpdateUseCase, OpenReleasePageUseCase,
 };
+use crate::domains::app_updates::domain::AppUpdateError;
 
 pub const DOWNLOAD_PROGRESS_EVENT: &str = "update-download-progress";
 pub const DOWNLOAD_FINISHED_EVENT: &str = "update-download-finished";
@@ -19,11 +20,26 @@ const MIN_PROGRESS_INTERVAL: Duration = Duration::from_millis(100);
 #[derive(Default)]
 pub struct DownloadInProgress(AtomicBool);
 
-#[tauri::command(async)]
-pub fn check_for_update(
+/// The updater adapter blocks on async calls, which is only allowed outside the async runtime threads.
+async fn run_blocking<Output, Operation>(operation: Operation) -> Result<Output, AppUpdateErrorDto>
+where
+    Output: Send + 'static,
+    Operation: FnOnce() -> Result<Output, AppUpdateError> + Send + 'static,
+{
+    tauri::async_runtime::spawn_blocking(operation)
+        .await
+        .map_err(|error| AppUpdateErrorDto::from(AppUpdateError::Unexpected(error.to_string())))?
+        .map_err(Into::into)
+}
+
+#[tauri::command]
+pub async fn check_for_update(
     use_case: State<'_, Arc<dyn CheckForUpdateUseCase>>,
 ) -> Result<UpdateCheckResultDto, AppUpdateErrorDto> {
-    use_case.execute().map(Into::into).map_err(Into::into)
+    let use_case = use_case.inner().clone();
+    run_blocking(move || use_case.execute())
+        .await
+        .map(Into::into)
 }
 
 #[tauri::command]
@@ -57,16 +73,18 @@ pub fn download_update(
     });
 }
 
-#[tauri::command(async)]
-pub fn install_update_and_restart(
+#[tauri::command]
+pub async fn install_update_and_restart(
     use_case: State<'_, Arc<dyn InstallUpdateUseCase>>,
 ) -> Result<(), AppUpdateErrorDto> {
-    use_case.execute().map_err(Into::into)
+    let use_case = use_case.inner().clone();
+    run_blocking(move || use_case.execute()).await
 }
 
-#[tauri::command(async)]
-pub fn open_release_page(
+#[tauri::command]
+pub async fn open_release_page(
     use_case: State<'_, Arc<dyn OpenReleasePageUseCase>>,
 ) -> Result<(), AppUpdateErrorDto> {
-    use_case.execute().map_err(Into::into)
+    let use_case = use_case.inner().clone();
+    run_blocking(move || use_case.execute()).await
 }

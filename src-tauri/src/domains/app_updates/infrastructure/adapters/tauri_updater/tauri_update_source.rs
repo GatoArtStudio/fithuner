@@ -51,6 +51,10 @@ impl UpdateSourcePort for TauriUpdateSource {
         let current_version = self.app.package_info().version.to_string();
         let found = block_on(updater.check()).map_err(map_updater_error)?;
 
+        log::info!(
+            "Update check finished: current {current_version}, available {:?}",
+            found.as_ref().map(|update| &update.version)
+        );
         *self.downloaded_bytes.lock().unwrap() = None;
         let available = found.as_ref().map(|update| AvailableUpdate {
             version: update.version.clone(),
@@ -89,8 +93,10 @@ impl UpdateSourcePort for TauriUpdateSource {
             },
             || {},
         ))
+        .inspect_err(|error| log::warn!("Update download failed: {error}"))
         .map_err(map_updater_error)?;
 
+        log::info!("Update downloaded and verified ({} bytes)", bytes.len());
         *self.downloaded_bytes.lock().unwrap() = Some(bytes);
         Ok(())
     }

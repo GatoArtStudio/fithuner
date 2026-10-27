@@ -936,6 +936,7 @@ dependencies = [
  "clipboard-rs",
  "dirs",
  "env_logger",
+ "log",
  "opener",
  "serde",
  "serde_json",
