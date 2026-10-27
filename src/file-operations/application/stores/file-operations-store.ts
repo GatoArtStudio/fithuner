@@ -3,6 +3,7 @@ import type {
   BatchOutcome,
   EntryReference,
   FileOperationError,
+  FileOperationEvent,
   NewEntryKind,
 } from "../../domain/entities/file-operation";
 import { fileNameOf, validateEntryName } from "../../domain/services/validate-entry-name";
@@ -49,6 +50,7 @@ export interface FileOperationsDependencies {
   };
   notifyError: (message: string) => void;
   shouldConfirmTrash?: () => boolean;
+  onCompleted?: (event: FileOperationEvent) => void;
 }
 
 function toFileOperationError(failure: unknown): FileOperationError {
@@ -63,6 +65,7 @@ export function createFileOperationsStore({
   directory,
   notifyError,
   shouldConfirmTrash = () => false,
+  onCompleted,
 }: FileOperationsDependencies): FileOperationsStore {
   function reportFailures(action: string, outcome: BatchOutcome) {
     const [firstFailure] = outcome.failed;
@@ -76,14 +79,22 @@ export function createFileOperationsStore({
     action: string,
     paths: string[],
     remove: (paths: string[]) => Promise<BatchOutcome>,
+    onRemoved?: (removedPaths: string[]) => void,
   ) {
     try {
-      reportFailures(action, await remove(paths));
+      const outcome = await remove(paths);
+      reportFailures(action, outcome);
+      if (outcome.succeeded.length > 0) onRemoved?.(outcome.succeeded);
     } catch (failure) {
       notifyError(toFileOperationError(failure).message);
     }
     await directory.refresh();
   }
+
+  const trashEntries = (paths: string[]) =>
+    removeEntries("move to trash", paths, gateway.trashEntries, (trashed) =>
+      onCompleted?.({ type: "trashed", paths: trashed }),
+    );
 
   return createStore<FileOperationsState>((set, get) => ({
     renamingPath: null,
@@ -104,6 +115,7 @@ export function createFileOperationsStore({
       if (parentPath === null) return;
       try {
         const createdPath = await gateway.createEntry(parentPath, kind);
+        onCompleted?.({ type: "created", path: createdPath });
         await directory.refresh();
         directory.selectEntry(createdPath);
         set({ renamingPath: createdPath, renameError: null });
@@ -135,6 +147,7 @@ export function createFileOperationsStore({
 
       try {
         const renamedPath = await gateway.renameEntry(path, newName);
+        onCompleted?.({ type: "renamed", from: path, to: renamedPath });
         await directory.refresh();
         directory.selectEntry(renamedPath);
         set({ renamingPath: null, renameError: null });
@@ -156,7 +169,7 @@ export function createFileOperationsStore({
         set({ pendingDeletion: { paths, mode: "trash" } });
         return;
       }
-      await removeEntries("move to trash", paths, gateway.trashEntries);
+      await trashEntries(paths);
     },
 
     requestPermanentDelete: () => {
@@ -169,7 +182,7 @@ export function createFileOperationsStore({
       set({ pendingDeletion: null });
       if (!pending) return;
       if (pending.mode === "trash") {
-        await removeEntries("move to trash", pending.paths, gateway.trashEntries);
+        await trashEntries(pending.paths);
       } else {
         await removeEntries("delete", pending.paths, gateway.deleteEntriesPermanently);
       }

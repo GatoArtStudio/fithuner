@@ -45,4 +45,21 @@ describe("composeApplication with several sessions", () => {
 
     expect(listingCalls().length - callsBefore).toBe(2);
   });
+
+  it("records file operations so they can be undone", async () => {
+    invoke.mockImplementation(async (command: string, args?: { path?: string; parentPath?: string }) => {
+      if (command === "list_directory") return { path: args?.path ?? "/home/ana", parentPath: null, entries: [] };
+      if (command === "create_entry") return `${args?.parentPath}/New folder`;
+      if (command === "trash_entries") return { succeeded: ["/home/ana/New folder"], failed: [] };
+      return undefined;
+    });
+    const application = composeApplication();
+    await vi.waitFor(() => expect(listingCalls()).toHaveLength(1));
+
+    await application.fileOperationsStore.getState().createEntry("directory");
+    await application.undoStore.getState().undo();
+
+    expect(invoke).toHaveBeenCalledWith("trash_entries", { paths: ["/home/ana/New folder"] });
+    expect(application.undoStore.getState().history.redoable).toHaveLength(1);
+  });
 });

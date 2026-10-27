@@ -56,6 +56,7 @@ import {
   useSettings,
   useSettingsShortcut,
 } from "../settings";
+import { UndoProvider, useUndoShortcuts } from "../undo-history";
 import { WorkspaceProvider, useWorkspaceShortcuts } from "../workspace";
 import { DragAndDropProvider } from "../shared/drag-and-drop/DragAndDropContext";
 import { DragPreview } from "../shared/drag-and-drop/DragPreview";
@@ -108,6 +109,7 @@ function Explorer({ connectBackendEvents, startWorkspacePersistence }: ExplorerP
   useCommandPaletteShortcuts(isSettingsOpen);
   useNavigationShortcuts(isSettingsOpen || isSearchOpen);
   useWorkspaceShortcuts(isSettingsOpen);
+  useUndoShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen || isSearchOpen);
   useFileOperationShortcuts(isSettingsOpen || isSearchOpen);
   useClipboardShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen || isSearchOpen);
 
@@ -205,6 +207,7 @@ export function App() {
       <UpdatesProvider store={application.updatesStore}>
       <PreviewProvider store={application.previewStore} gateway={application.previewGateway}>
       <WorkspaceProvider store={application.workspaceStore}>
+      <UndoProvider store={application.undoStore}>
       <ActiveSession workspaceStore={application.workspaceStore}>
         <PlacesProvider store={application.placesStore}>
           <FileOperationsProvider store={application.fileOperationsStore}>
@@ -221,6 +224,7 @@ export function App() {
           </FileOperationsProvider>
         </PlacesProvider>
       </ActiveSession>
+      </UndoProvider>
       </WorkspaceProvider>
       </PreviewProvider>
       </UpdatesProvider>

@@ -3,6 +3,10 @@ mod use_cases;
 
 pub use ports::{
     CreateEntryUseCase, DeleteEntriesPermanentlyUseCase, EntryWriterPort, FileOpenerPort,
-    OpenEntryUseCase, RenameEntryUseCase, TrashEntriesUseCase, TrashPort,
+    MoveEntriesUseCase, OpenEntryUseCase, RenameEntryUseCase, RestoreEntriesUseCase,
+    TrashEntriesUseCase, TrashPort,
 };
-pub use use_cases::{CreateEntry, DeleteEntriesPermanently, OpenEntry, RenameEntry, TrashEntries};
+pub use use_cases::{
+    CreateEntry, DeleteEntriesPermanently, MoveEntries, OpenEntry, RenameEntry, RestoreEntries,
+    TrashEntries,
+};

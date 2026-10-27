@@ -136,12 +136,20 @@ pub struct FailedTransferDto {
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct TransferredEntryDto {
+    from: String,
+    to: String,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct TransferFinishedDto {
     transfer_id: String,
     transferred_files: u64,
     skipped: Vec<String>,
     failed: Vec<FailedTransferDto>,
     cancelled: bool,
+    transferred: Vec<TransferredEntryDto>,
     error: Option<String>,
 }
 
@@ -168,6 +176,14 @@ impl TransferFinishedDto {
                     })
                     .collect(),
                 cancelled: outcome.cancelled,
+                transferred: outcome
+                    .transferred
+                    .into_iter()
+                    .map(|entry| TransferredEntryDto {
+                        from: entry.from.to_string_lossy().into_owned(),
+                        to: entry.to.to_string_lossy().into_owned(),
+                    })
+                    .collect(),
                 error: None,
             },
             Err(error) => Self {
@@ -176,6 +192,7 @@ impl TransferFinishedDto {
                 skipped: Vec::new(),
                 failed: Vec::new(),
                 cancelled: false,
+                transferred: Vec::new(),
                 error: Some(error.to_string()),
             },
         }

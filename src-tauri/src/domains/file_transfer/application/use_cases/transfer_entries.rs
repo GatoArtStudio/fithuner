@@ -516,4 +516,172 @@ mod tests {
             )]
         );
     }
+
+    fn entries(outcome: &TransferOutcome) -> Vec<(String, String)> {
+        outcome
+            .transferred
+            .iter()
+            .map(|entry| {
+                (
+                    entry.from.to_string_lossy().replace('\\', "/"),
+                    entry.to.to_string_lossy().replace('\\', "/"),
+                )
+            })
+            .collect()
+    }
+
+    #[test]
+    fn reports_where_a_copy_was_created() {
+        let file_system = fixture();
+        file_system.add_file("/src/a.txt", 1);
+        file_system.add_file("/src/b.txt", 1);
+
+        let outcome = run(
+            &file_system,
+            TransferMode::Copy,
+            &["/src/a.txt", "/src/b.txt"],
+            "/dest",
+            &ScriptedResolver::default(),
+        )
+        .unwrap();
+
+        assert_eq!(
+            entries(&outcome),
+            vec![
+                ("/src/a.txt".into(), "/dest/a.txt".into()),
+                ("/src/b.txt".into(), "/dest/b.txt".into())
+            ]
+        );
+    }
+
+    #[test]
+    fn reports_a_fast_move_and_a_move_across_devices() {
+        let file_system = fixture();
+        file_system.add_file("/src/a.txt", 1);
+        let fast = run(
+            &file_system,
+            TransferMode::Move,
+            &["/src/a.txt"],
+            "/dest",
+            &ScriptedResolver::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            entries(&fast),
+            vec![("/src/a.txt".into(), "/dest/a.txt".into())]
+        );
+
+        let slow_system = Arc::new(FakeTransferFileSystem::new().on_another_device());
+        slow_system.add_directory("/dest");
+        slow_system.add_file("/src/album/one.jpg", 10);
+        let slow = run(
+            &slow_system,
+            TransferMode::Move,
+            &["/src/album"],
+            "/dest",
+            &ScriptedResolver::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            entries(&slow),
+            vec![("/src/album".into(), "/dest/album".into())]
+        );
+    }
+
+    #[test]
+    fn reports_the_numbered_name_when_both_are_kept() {
+        let file_system = fixture();
+        file_system.add_file("/src/a.txt", 100);
+        file_system.add_file("/dest/a.txt", 5);
+        let resolver = ScriptedResolver::answering(&[(ConflictResolution::KeepBoth, false)]);
+
+        let outcome = run(
+            &file_system,
+            TransferMode::Copy,
+            &["/src/a.txt"],
+            "/dest",
+            &resolver,
+        )
+        .unwrap();
+
+        assert_eq!(
+            entries(&outcome),
+            vec![("/src/a.txt".into(), "/dest/a (2).txt".into())]
+        );
+    }
+
+    #[test]
+    fn reports_the_numbered_copy_made_in_the_same_folder() {
+        let file_system = fixture();
+        file_system.add_file("/dest/a.txt", 7);
+
+        let outcome = run(
+            &file_system,
+            TransferMode::Copy,
+            &["/dest/a.txt"],
+            "/dest",
+            &ScriptedResolver::default(),
+        )
+        .unwrap();
+
+        assert_eq!(
+            entries(&outcome),
+            vec![("/dest/a.txt".into(), "/dest/a (2).txt".into())]
+        );
+    }
+
+    #[test]
+    fn leaves_out_replacements_merges_skips_and_incomplete_moves() {
+        let file_system = fixture();
+        file_system.add_file("/src/a.txt", 100);
+        file_system.add_file("/dest/a.txt", 5);
+        let replaced = run(
+            &file_system,
+            TransferMode::Copy,
+            &["/src/a.txt"],
+            "/dest",
+            &ScriptedResolver::answering(&[(ConflictResolution::Replace, false)]),
+        )
+        .unwrap();
+        assert!(replaced.transferred.is_empty());
+
+        let merge_system = fixture();
+        merge_system.add_file("/src/album/one.jpg", 1);
+        merge_system.add_file("/dest/album/two.jpg", 1);
+        let merged = run(
+            &merge_system,
+            TransferMode::Copy,
+            &["/src/album"],
+            "/dest",
+            &ScriptedResolver::default(),
+        )
+        .unwrap();
+        assert!(merged.transferred.is_empty());
+
+        let skip_system = fixture();
+        skip_system.add_file("/src/a.txt", 100);
+        skip_system.add_file("/dest/a.txt", 5);
+        let skipped = run(
+            &skip_system,
+            TransferMode::Copy,
+            &["/src/a.txt"],
+            "/dest",
+            &ScriptedResolver::answering(&[(ConflictResolution::Skip, false)]),
+        )
+        .unwrap();
+        assert!(skipped.transferred.is_empty());
+
+        let partial_system = Arc::new(FakeTransferFileSystem::new().on_another_device());
+        partial_system.add_file("/src/album/one.jpg", 10);
+        partial_system.add_file("/dest/album/one.jpg", 99);
+        let partial = run(
+            &partial_system,
+            TransferMode::Move,
+            &["/src/album"],
+            "/dest",
+            &ScriptedResolver::answering(&[(ConflictResolution::Skip, false)]),
+        )
+        .unwrap();
+        assert!(partial.transferred.is_empty());
+    }
 }

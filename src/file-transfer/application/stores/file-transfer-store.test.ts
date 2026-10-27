@@ -29,6 +29,7 @@ const finished: TransferFinished = {
   skipped: [],
   failed: [],
   cancelled: false,
+  transferred: [],
   error: null,
 };
 
