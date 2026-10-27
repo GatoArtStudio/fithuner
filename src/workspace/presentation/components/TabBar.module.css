@@ -43,6 +43,11 @@
   box-shadow: inset 0 2px 0 var(--color-border);
 }
 
+.tab[data-dragging="true"] {
+  background: var(--color-selection);
+  cursor: grabbing;
+}
+
 .title {
   flex: 1;
   min-width: 0;

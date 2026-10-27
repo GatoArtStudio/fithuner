@@ -40,6 +40,7 @@ export interface WorkspaceState<Session extends WorkspaceSession> {
   cycleTab: (step: 1 | -1) => void;
   activateTabAtPosition: (position: number) => void;
   reorderTab: (tabId: string, toIndex: number) => void;
+  moveTabToPane: (tabId: string, paneId: string) => void;
   moveTabToOtherPane: (tabId: string) => void;
   toggleSplit: () => void;
   switchPane: () => void;
@@ -124,6 +125,7 @@ export function createWorkspaceStore<Session extends WorkspaceSession>({
       cycleTab: (step) => apply(cycleTab(get().workspace, step)),
       activateTabAtPosition: (position) => apply(activateTabAtPosition(get().workspace, position)),
       reorderTab: (tabId, toIndex) => apply(reorderTab(get().workspace, tabId, toIndex)),
+      moveTabToPane: (tabId, paneId) => apply(moveTabToPane(get().workspace, tabId, paneId)),
       moveTabToOtherPane: (tabId) => {
         const { workspace } = get();
         const location = findTab(workspace, tabId);

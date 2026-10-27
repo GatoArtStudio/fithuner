@@ -122,6 +122,17 @@ describe("workspace store", () => {
       expect(store.getState().workspace.activePaneId).toBe(secondPane.id);
     });
 
+    it("moves a tab to a given pane", () => {
+      const { store } = createFakeStore();
+      store.getState().newTab();
+      store.getState().toggleSplit();
+      const [firstPane, secondPane] = store.getState().workspace.panes;
+
+      store.getState().moveTabToPane(firstPane.tabs[1].id, secondPane.id);
+
+      expect(tabIds(store.getState())).toEqual([["s1"], ["s3", "s2"]]);
+    });
+
     it("closes the pane and its session when its last tab closes", () => {
       const { store, disposed } = createFakeStore();
       store.getState().toggleSplit();
