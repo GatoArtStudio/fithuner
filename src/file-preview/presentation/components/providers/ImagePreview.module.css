@@ -1,6 +1,8 @@
 .frame {
   position: relative;
   display: grid;
+  overflow: hidden;
+  touch-action: none;
   place-items: center;
   height: 100%;
   padding: var(--space-3);
@@ -12,19 +14,46 @@
   background-size: 16px 16px;
 }
 
+.frame[data-zoomed="true"] {
+  cursor: grab;
+}
+
+.frame[data-panning="true"] {
+  cursor: grabbing;
+}
+
 .image {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  transform-origin: center;
+  user-select: none;
 }
 
-.dimensions {
+.status {
   position: absolute;
   right: var(--space-3);
   bottom: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: 2px var(--space-2);
   border-radius: var(--radius-sm);
   background: var(--color-popover);
   color: var(--color-text-muted);
   font-size: 12px;
+  cursor: default;
+}
+
+.fit {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.fit:hover {
+  background: var(--color-hover);
 }
