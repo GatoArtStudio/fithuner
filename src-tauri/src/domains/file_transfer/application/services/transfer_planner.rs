@@ -9,6 +9,15 @@ pub struct TreeTotals {
     pub files: u64,
 }
 
+impl TreeTotals {
+    pub fn plus(self, other: Self) -> Self {
+        Self {
+            bytes: self.bytes + other.bytes,
+            files: self.files + other.files,
+        }
+    }
+}
+
 pub struct TransferPlanner;
 
 impl TransferPlanner {
@@ -28,10 +37,7 @@ impl TransferPlanner {
                 .unwrap_or_default()
                 .iter()
                 .map(|child| Self::measure(file_system, child))
-                .fold(TreeTotals::default(), |total, child| TreeTotals {
-                    bytes: total.bytes + child.bytes,
-                    files: total.files + child.files,
-                }),
+                .fold(TreeTotals::default(), TreeTotals::plus),
         }
     }
 }
