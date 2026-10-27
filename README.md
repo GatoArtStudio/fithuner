@@ -107,6 +107,7 @@ pnpm tauri dev
 - Commands that need a selection only appear when something is selected.
 
 ## Preview
+- Images zoom with the mouse wheel (around the pointer) and move when you drag them, in the side panel and in Quick Look. Double click or "Fit" returns to the fitted view.
 - The panel follows the selected file; drag its edge (or focus it and use the arrow keys) to resize it. Move it to the bottom in Settings > Preview.
 - Each file type can be turned off and has a size limit. Text is cut at the limit, PDFs and images over the limit offer "Preview anyway", and other types offer "Open with default app".
 - Markdown is sanitized before it is shown, and links are never followed from the preview.
