@@ -7,5 +7,7 @@ export {
   useDirectoryBrowsing,
 } from "./presentation/context/DirectoryBrowsingContext";
 export { DirectoryList } from "./presentation/components/DirectoryList";
+export type { ContextMenuPosition } from "./presentation/components/DirectoryList";
+export type { FileEntry } from "./domain/entities/file-entry";
 export { FolderStatusBar } from "./presentation/components/FolderStatusBar";
 export { ShowHiddenToggle } from "./presentation/components/ShowHiddenToggle";
