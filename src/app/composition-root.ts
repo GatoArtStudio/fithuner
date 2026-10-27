@@ -145,6 +145,7 @@ export function composeApplication() {
     updatesStore,
     workspaceStore,
     fileTransferStore,
+    undoStore,
   };
   const commandPaletteStore = createCommandPaletteStore({
     getItems: (query) => buildPaletteItems(paletteStores, query),

@@ -7,6 +7,7 @@ import type { SettingsStore } from "../settings";
 import type { UpdatesStore } from "../app-updates";
 import type { FileTransferStore } from "../file-transfer";
 import type { WorkspaceStore } from "../workspace";
+import { selectRedoLabel, selectUndoLabel, type UndoStore } from "../undo-history";
 import type { BrowsingSession } from "./browsing-session";
 import { command } from "./palette-command";
 import { buildWorkspaceCommands } from "./palette-workspace-commands";
@@ -23,6 +24,7 @@ export interface PaletteStores {
   updatesStore: UpdatesStore;
   workspaceStore: WorkspaceStore<BrowsingSession>;
   fileTransferStore: FileTransferStore;
+  undoStore: UndoStore;
 }
 
 const RECENT_FOLDERS_LIMIT = 10;
@@ -35,7 +37,9 @@ function buildCommands(stores: PaletteStores): PaletteItem[] {
   const preview = settings.settings.preview;
   const isSearchOpen = session.searchStore.getState().isOpen;
   const hasSelection = directory.selectedPaths.length > 0 && !isSearchOpen;
-  const { fileOperationsStore, fileClipboardStore } = stores;
+  const { fileOperationsStore, fileClipboardStore, undoStore } = stores;
+  const undoLabel = selectUndoLabel(undoStore.getState());
+  const redoLabel = selectRedoLabel(undoStore.getState());
 
   const commands = [
     command("new-folder", "New folder", () => void fileOperationsStore.getState().createEntry("directory"), {
@@ -74,6 +78,14 @@ function buildCommands(stores: PaletteStores): PaletteItem[] {
     command("paste", "Paste", () => void fileClipboardStore.getState().paste(), {
       shortcut: "Ctrl+V",
       isAvailable: !isSearchOpen,
+    }),
+    command("undo", `Undo ${undoLabel}`, () => void undoStore.getState().undo(), {
+      shortcut: "Ctrl+Z",
+      isAvailable: undoLabel !== null,
+    }),
+    command("redo", `Redo ${redoLabel}`, () => void undoStore.getState().redo(), {
+      shortcut: "Ctrl+Shift+Z",
+      isAvailable: redoLabel !== null,
     }),
     command("refresh", "Refresh", () => void directory.refresh(), { shortcut: "F5", keywords: ["reload"] }),
     command("back", "Go back", () => void navigation.goBack(), {

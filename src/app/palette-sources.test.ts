@@ -8,6 +8,7 @@ import { createPreviewStore } from "../file-preview";
 import { createSearchStore } from "../folder-search";
 import { createNavigationStore, createPlacesStore } from "../navigation";
 import { createSettingsStore } from "../settings";
+import { createUndoStore } from "../undo-history";
 import { createWorkspaceStore, selectActiveSession } from "../workspace";
 import type { BrowsingSession } from "./browsing-session";
 import { buildPaletteItems, type PaletteStores } from "./palette-sources";
@@ -89,6 +90,11 @@ async function createStores() {
     activeSession: () => selectActiveSession(workspaceStore.getState()),
     workspaceStore,
     fileTransferStore,
+    undoStore: createUndoStore({
+      gateway: { moveEntries: vi.fn(), trashEntries: vi.fn(), restoreEntries: vi.fn() },
+      afterChange: vi.fn(),
+      notify: vi.fn(),
+    }),
     placesStore,
     fileOperationsStore: createFileOperationsStore({
       gateway: {
@@ -335,6 +341,27 @@ describe("buildPaletteItems", () => {
       stores.workspaceStore.getState().toggleSplit();
 
       expect(titles(buildPaletteItems(stores, ""))).not.toContain("Copy to the other pane");
+    });
+  });
+
+  describe("undo and redo commands", () => {
+    it("only appear when there is something to undo or redo", async () => {
+      const stores = await createStores();
+      expect(titles(buildPaletteItems(stores, "")).some((title) => title.startsWith("Undo "))).toBe(false);
+      expect(titles(buildPaletteItems(stores, "")).some((title) => title.startsWith("Redo "))).toBe(false);
+
+      stores.undoStore.getState().record({ type: "rename", from: "/home/ana/a.txt", to: "/home/ana/b.txt" });
+      expect(titles(buildPaletteItems(stores, ""))).toContain("Undo renaming “a.txt”");
+    });
+
+    it("run through the undo store", async () => {
+      const stores = await createStores();
+      const undo = vi.spyOn(stores.undoStore.getState(), "undo");
+      stores.undoStore.getState().record({ type: "create", path: "/home/ana/New folder" });
+
+      find(buildPaletteItems(stores, ""), "command:undo")?.run();
+
+      expect(undo).toHaveBeenCalled();
     });
   });
 });
