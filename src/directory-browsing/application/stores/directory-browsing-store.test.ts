@@ -78,4 +78,12 @@ describe("directory browsing store", () => {
 
     expect(store.getState().selectedPaths).toEqual(["/b"]);
   });
+
+  it("sets the hidden files visibility explicitly", () => {
+    const store = createDirectoryBrowsingStore(gatewayReturning(listingAt("/")));
+
+    store.getState().setShowHidden(true);
+
+    expect(store.getState().showHidden).toBe(true);
+  });
 });

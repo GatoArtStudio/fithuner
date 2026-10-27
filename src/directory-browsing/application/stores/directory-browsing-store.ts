@@ -14,6 +14,7 @@ export interface DirectoryBrowsingState {
   refresh: () => Promise<void>;
   toggleSort: (key: SortKey) => void;
   toggleShowHidden: () => void;
+  setShowHidden: (showHidden: boolean) => void;
   selectOnly: (path: string) => void;
   toggleSelection: (path: string) => void;
   clearSelection: () => void;
@@ -74,6 +75,8 @@ export function createDirectoryBrowsingStore(gateway: DirectoryGateway): Directo
       })),
 
     toggleShowHidden: () => set(({ showHidden }) => ({ showHidden: !showHidden })),
+
+    setShowHidden: (showHidden) => set({ showHidden }),
 
     selectOnly: (path) => set({ selectedPaths: [path] }),
 

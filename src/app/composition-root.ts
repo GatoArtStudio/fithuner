@@ -2,6 +2,7 @@ import {
   createDirectoryBrowsingStore,
   tauriDirectoryGateway,
 } from "../directory-browsing";
+import { bindSettings } from "./bind-settings";
 import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
 import { createFileTransferStore, isValidDropTarget, tauriFileTransferGateway } from "../file-transfer";
@@ -31,6 +32,7 @@ export function composeApplication() {
       selectEntry: (path) => directoryBrowsingStore.getState().selectOnly(path),
     },
     notifyError: (message) => toastStore.getState().push(message, "error"),
+    shouldConfirmTrash: () => settingsStore.getState().settings.browsing.confirmBeforeTrash,
   });
 
   const fileTransferStore = createFileTransferStore({
@@ -63,6 +65,8 @@ export function composeApplication() {
       });
     },
   };
+
+  bindSettings({ settingsStore, directoryBrowsingStore });
 
   async function connectBackendEvents() {
     const unsubscribes = await Promise.all([
