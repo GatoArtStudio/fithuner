@@ -154,7 +154,7 @@ mod tests {
         let mut with_hidden = query("x");
         with_hidden.include_hidden = true;
 
-        search(walker, with_hidden);
+        let _ = search(walker, with_hidden);
 
         assert_eq!(*requested.lock().unwrap(), vec![true]);
     }
