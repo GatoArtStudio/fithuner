@@ -1,0 +1,3 @@
+mod update_watched_folders_use_case;
+
+pub use update_watched_folders_use_case::UpdateWatchedFoldersUseCase;

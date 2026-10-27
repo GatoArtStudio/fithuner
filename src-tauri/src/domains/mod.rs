@@ -5,6 +5,7 @@ pub mod file_operations;
 pub mod file_preview;
 pub mod file_transfer;
 pub mod folder_search;
+pub mod folder_watching;
 pub mod places;
 pub mod settings;
 pub mod shared_kernel;
