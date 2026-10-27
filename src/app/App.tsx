@@ -68,9 +68,10 @@ import styles from "./App.module.css";
 
 interface ExplorerProps {
   connectBackendEvents: () => Promise<() => void>;
+  startWorkspacePersistence: () => () => void;
 }
 
-function Explorer({ connectBackendEvents }: ExplorerProps) {
+function Explorer({ connectBackendEvents, startWorkspacePersistence }: ExplorerProps) {
   const loadPlaces = usePlaces((state) => state.load);
   const openEntry = useFileOperations((state) => state.openEntry);
   const renamingPath = useFileOperations((state) => state.renamingPath);
@@ -124,8 +125,18 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   }, [connectBackendEvents]);
 
   useEffect(() => {
-    void loadSettings().then(runStartupCheck);
-  }, [loadSettings, runStartupCheck]);
+    let isDisposed = false;
+    let stopPersistence: (() => void) | undefined;
+    void loadSettings().then(() => {
+      if (isDisposed) return;
+      stopPersistence = startWorkspacePersistence();
+      return runStartupCheck();
+    });
+    return () => {
+      isDisposed = true;
+      stopPersistence?.();
+    };
+  }, [loadSettings, runStartupCheck, startWorkspacePersistence]);
 
   useEffect(() => {
     void loadPlaces();
@@ -200,7 +211,10 @@ export function App() {
             <FileTransferProvider store={application.fileTransferStore}>
               <FileClipboardProvider store={application.fileClipboardStore}>
                 <DragAndDropProvider {...application.dragAndDrop}>
-                  <Explorer connectBackendEvents={application.connectBackendEvents} />
+                  <Explorer
+                    connectBackendEvents={application.connectBackendEvents}
+                    startWorkspacePersistence={application.startWorkspacePersistence}
+                  />
                 </DragAndDropProvider>
               </FileClipboardProvider>
             </FileTransferProvider>

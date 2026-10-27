@@ -15,3 +15,6 @@ export { WorkspaceProvider, useWorkspace } from "./presentation/context/Workspac
 export { useWorkspaceShortcuts } from "./presentation/hooks/useWorkspaceShortcuts";
 export { SplitDivider } from "./presentation/components/SplitDivider";
 export { SplitToggleButton } from "./presentation/components/SplitToggleButton";
+export type { WorkspaceLayoutGateway } from "./application/ports/workspace-layout-gateway";
+export { createLocalStorageWorkspaceLayoutGateway } from "./infrastructure/gateways/local-storage/local-storage-workspace-layout-gateway";
+export { createMemoryWorkspaceLayoutGateway } from "./infrastructure/gateways/memory/memory-workspace-layout-gateway";

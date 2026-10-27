@@ -1,5 +1,6 @@
 import { tauriDirectoryGateway } from "../directory-browsing";
 import { bindFolderWatching } from "./bind-folder-watching";
+import { startWorkspacePersistence } from "./bind-workspace-persistence";
 import { buildPaletteItems } from "./palette-sources";
 import { createBrowsingSessionFactory, type BrowsingSession } from "./browsing-session";
 import { createUpdatesStore, tauriUpdatesGateway } from "../app-updates";
@@ -15,7 +16,11 @@ import { findDropTargetAt } from "../shared/drag-and-drop/drop-targets";
 import { createPreviewStore, tauriPreviewGateway } from "../file-preview";
 import { createSettingsStore, tauriSettingsGateway } from "../settings";
 import { createToastStore } from "../shared/notifications/toast-store";
-import { createWorkspaceStore, selectActiveSession } from "../workspace";
+import {
+  createLocalStorageWorkspaceLayoutGateway,
+  createWorkspaceStore,
+  selectActiveSession,
+} from "../workspace";
 
 export function composeApplication() {
   const toastStore = createToastStore();
@@ -144,5 +149,11 @@ export function composeApplication() {
     fileClipboardStore,
     dragAndDrop,
     connectBackendEvents,
+    startWorkspacePersistence: () =>
+      startWorkspacePersistence({
+        workspaceStore,
+        settingsStore,
+        gateway: createLocalStorageWorkspaceLayoutGateway(),
+      }),
   };
 }

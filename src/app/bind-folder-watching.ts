@@ -2,6 +2,7 @@ import type { FolderWatchGateway } from "../folder-watching";
 import type { SettingsStore } from "../settings";
 import type { WorkspaceStore } from "../workspace";
 import type { BrowsingSession } from "./browsing-session";
+import { followSessionFolders } from "./follow-session-folders";
 
 interface BindFolderWatchingDependencies {
   workspaceStore: WorkspaceStore<BrowsingSession>;
@@ -17,7 +18,6 @@ export function bindFolderWatching({
   gateway,
   debounceMillis = 100,
 }: BindFolderWatchingDependencies) {
-  const folderSubscriptions = new Map<string, () => void>();
   const changedFolders = new Set<string>();
   let reloadTimer: ReturnType<typeof setTimeout> | undefined;
   let lastWatched = "";
@@ -43,25 +43,6 @@ export function bindFolderWatching({
     });
   }
 
-  function followSessions() {
-    const current = new Map(sessions().map((session) => [session.id, session.directoryBrowsingStore]));
-    for (const [sessionId, stop] of folderSubscriptions) {
-      if (current.has(sessionId)) continue;
-      stop();
-      folderSubscriptions.delete(sessionId);
-    }
-    for (const [sessionId, store] of current) {
-      if (folderSubscriptions.has(sessionId)) continue;
-      folderSubscriptions.set(
-        sessionId,
-        store.subscribe((state, previous) => {
-          if (state.listing?.path !== previous.listing?.path) syncWatchedFolders();
-        }),
-      );
-    }
-    syncWatchedFolders();
-  }
-
   function reloadChangedFolders() {
     reloadTimer = undefined;
     const folders = new Set(changedFolders);
@@ -72,13 +53,11 @@ export function bindFolderWatching({
     }
   }
 
-  const stopFollowingWorkspace = workspaceStore.subscribe((state, previous) => {
-    if (state.sessions !== previous.sessions) followSessions();
-  });
+  const stopFollowingFolders = followSessionFolders(workspaceStore, syncWatchedFolders);
   const stopFollowingSettings = settingsStore.subscribe((state, previous) => {
     if (state.settings.browsing.watchFolders !== previous.settings.browsing.watchFolders) syncWatchedFolders();
   });
-  followSessions();
+  syncWatchedFolders();
 
   return {
     handleFolderChanged: (folder: string) => {
@@ -86,10 +65,8 @@ export function bindFolderWatching({
       if (reloadTimer === undefined) reloadTimer = setTimeout(reloadChangedFolders, debounceMillis);
     },
     dispose: () => {
-      stopFollowingWorkspace();
+      stopFollowingFolders();
       stopFollowingSettings();
-      folderSubscriptions.forEach((stop) => stop());
-      folderSubscriptions.clear();
       clearTimeout(reloadTimer);
     },
   };

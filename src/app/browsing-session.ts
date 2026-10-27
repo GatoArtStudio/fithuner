@@ -39,7 +39,13 @@ export function createBrowsingSessionFactory({
 
     const stopBindingSearch = bindSearch({ searchStore, directoryBrowsingStore });
     const stopBindingSettings = bindSettings({ settingsStore, directoryBrowsingStore });
-    void navigationStore.getState().navigateTo(startPath);
+    void navigationStore
+      .getState()
+      .navigateTo(startPath)
+      .then(() => {
+        const hasNothingOpen = directoryBrowsingStore.getState().listing === null;
+        if (startPath !== undefined && hasNothingOpen) void navigationStore.getState().navigateTo(undefined);
+      });
 
     return {
       id: `session-${++sessionCount}`,
