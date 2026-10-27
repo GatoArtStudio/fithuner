@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::preview_settings_dto::PreviewSettingsDto;
 use crate::domains::settings::domain::{
-    AppSettings, AppearanceSettings, BrowsingSettings, ThemePreference,
+    AppSettings, AppearanceSettings, BrowsingSettings, ThemePreference, UpdateSettings,
 };
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -28,10 +28,18 @@ pub struct BrowsingSettingsDto {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct UpdateSettingsDto {
+    check_on_startup: bool,
+    auto_download: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SettingsDto {
     appearance: AppearanceSettingsDto,
     browsing: BrowsingSettingsDto,
     preview: PreviewSettingsDto,
+    updates: UpdateSettingsDto,
 }
 
 impl From<AppSettings> for SettingsDto {
@@ -49,6 +57,10 @@ impl From<AppSettings> for SettingsDto {
                 confirm_before_trash: settings.browsing.confirm_before_trash,
             },
             preview: settings.preview.into(),
+            updates: UpdateSettingsDto {
+                check_on_startup: settings.updates.check_on_startup,
+                auto_download: settings.updates.auto_download,
+            },
         }
     }
 }
@@ -68,6 +80,10 @@ impl From<SettingsDto> for AppSettings {
                 confirm_before_trash: dto.browsing.confirm_before_trash,
             },
             preview: dto.preview.into(),
+            updates: UpdateSettings {
+                check_on_startup: dto.updates.check_on_startup,
+                auto_download: dto.updates.auto_download,
+            },
         }
     }
 }

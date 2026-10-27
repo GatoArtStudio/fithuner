@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::PreviewModel;
+use super::{PreviewModel, UpdatesModel};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -9,6 +9,7 @@ pub struct SettingsModel {
     pub appearance: AppearanceModel,
     pub browsing: BrowsingModel,
     pub preview: PreviewModel,
+    pub updates: UpdatesModel,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
