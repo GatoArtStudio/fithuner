@@ -1,4 +1,4 @@
-import { useMemo, useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Icon } from "../../../shared/icons/Icon";
 import type { FileEntry } from "../../domain/entities/file-entry";
@@ -27,11 +27,18 @@ function describeType(entry: FileEntry): string {
   return extension ? `${extension.toUpperCase()} file` : "File";
 }
 
-interface DirectoryListProps {
-  onOpenDirectory: (path: string) => void;
+export interface ContextMenuPosition {
+  x: number;
+  y: number;
 }
 
-export function DirectoryList({ onOpenDirectory }: DirectoryListProps) {
+interface DirectoryListProps {
+  onOpenEntry: (entry: FileEntry) => void;
+  onContextMenu: (entry: FileEntry | null, position: ContextMenuPosition) => void;
+  renderNameEditor?: (entry: FileEntry) => ReactNode;
+}
+
+export function DirectoryList({ onOpenEntry, onContextMenu, renderNameEditor }: DirectoryListProps) {
   const listing = useDirectoryBrowsing((state) => state.listing);
   const error = useDirectoryBrowsing((state) => state.error);
   const sort = useDirectoryBrowsing((state) => state.sort);
@@ -59,8 +66,25 @@ export function DirectoryList({ onOpenDirectory }: DirectoryListProps) {
     overscan: 12,
   });
 
-  function openEntry(entry: FileEntry) {
-    if (entry.kind === "directory") onOpenDirectory(entry.path);
+  const lastSelectedPath = selectedPaths[selectedPaths.length - 1];
+
+  useEffect(() => {
+    if (!lastSelectedPath) return;
+    const index = visibleEntries.findIndex((entry) => entry.path === lastSelectedPath);
+    if (index !== -1) virtualizer.scrollToIndex(index);
+  }, [lastSelectedPath, visibleEntries, virtualizer]);
+
+  function handleRowContextMenu(event: MouseEvent, entry: FileEntry) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!selectedPathSet.has(entry.path)) selectOnly(entry.path);
+    onContextMenu(entry, { x: event.clientX, y: event.clientY });
+  }
+
+  function handleBlankAreaContextMenu(event: MouseEvent) {
+    event.preventDefault();
+    clearSelection();
+    onContextMenu(null, { x: event.clientX, y: event.clientY });
   }
 
   function handleRowClick(event: MouseEvent, entry: FileEntry) {
@@ -72,7 +96,11 @@ export function DirectoryList({ onOpenDirectory }: DirectoryListProps) {
     const target = visibleEntries[Math.max(0, Math.min(index, visibleEntries.length - 1))];
     if (!target) return;
     selectOnly(target.path);
-    virtualizer.scrollToIndex(visibleEntries.indexOf(target));
+  }
+
+  function openContextMenuFromKeyboard(entry: FileEntry | null) {
+    const bounds = scrollContainerRef.current?.getBoundingClientRect();
+    onContextMenu(entry, { x: (bounds?.left ?? 0) + 48, y: (bounds?.top ?? 0) + 48 });
   }
 
   function handleKeyDown(event: KeyboardEvent) {
@@ -93,7 +121,14 @@ export function DirectoryList({ onOpenDirectory }: DirectoryListProps) {
         moveSelectionTo(visibleEntries.length - 1);
         break;
       case "Enter":
-        if (currentIndex !== -1) openEntry(visibleEntries[currentIndex]);
+        if (currentIndex !== -1) onOpenEntry(visibleEntries[currentIndex]);
+        break;
+      case "ContextMenu":
+        openContextMenuFromKeyboard(visibleEntries[currentIndex] ?? null);
+        break;
+      case "F10":
+        if (!event.shiftKey) return;
+        openContextMenuFromKeyboard(visibleEntries[currentIndex] ?? null);
         break;
       case "Escape":
         clearSelection();
@@ -142,6 +177,7 @@ export function DirectoryList({ onOpenDirectory }: DirectoryListProps) {
         onClick={(event) => {
           if (event.target === event.currentTarget) clearSelection();
         }}
+        onContextMenu={handleBlankAreaContextMenu}
       >
         {listing && visibleEntries.length === 0 && (
           <p className={styles.emptyState}>This folder is empty</p>
@@ -161,14 +197,15 @@ export function DirectoryList({ onOpenDirectory }: DirectoryListProps) {
                 }`}
                 style={{ height: ROW_HEIGHT, transform: `translateY(${virtualRow.start}px)` }}
                 onClick={(event) => handleRowClick(event, entry)}
-                onDoubleClick={() => openEntry(entry)}
+                onContextMenu={(event) => handleRowContextMenu(event, entry)}
+                onDoubleClick={() => onOpenEntry(entry)}
               >
                 <span className={styles.nameCell}>
                   <Icon
                     name={entry.kind === "directory" ? "folder" : "file"}
                     className={entry.kind === "directory" ? styles.folderIcon : styles.fileIcon}
                   />
-                  <span className={styles.name}>{entry.name}</span>
+                  {renderNameEditor?.(entry) ?? <span className={styles.name}>{entry.name}</span>}
                 </span>
                 <span className={styles.secondaryCell}>
                   {formatModifiedDate(entry.modifiedAtMillis)}
