@@ -18,7 +18,7 @@ import {
   type SearchMatch,
   type SearchResultsHandle,
 } from "../folder-search";
-import { Breadcrumbs, NavigationControls, useNavigation } from "../navigation";
+import { Breadcrumbs, NavigationControls, useHistoryMouseButtons, useNavigation } from "../navigation";
 import { SplitToggleButton, TabBar, useWorkspace } from "../workspace";
 import type { BrowsingSession } from "./browsing-session";
 import { SessionProviders } from "./SessionProviders";
@@ -45,6 +45,7 @@ function PaneContent({ paneId, isActive }: PaneContentProps) {
   const openQuickLook = usePreview((state) => state.openQuickLook);
   const { isQuickLookEnabled } = usePreviewLayout();
   const resultsRef = useRef<SearchResultsHandle>(null);
+  const historyMouseButtons = useHistoryMouseButtons(isSearchOpen);
 
   function parentFolderOf(match: SearchMatch): string {
     return match.path.slice(0, match.path.length - match.name.length).replace(/[\\/]$/, "") || "/";
@@ -76,6 +77,7 @@ function PaneContent({ paneId, isActive }: PaneContentProps) {
       data-active={isActive}
       onMouseDownCapture={() => activatePane(paneId)}
       onFocusCapture={() => activatePane(paneId)}
+      {...historyMouseButtons}
     >
       <TabBar
         paneId={paneId}

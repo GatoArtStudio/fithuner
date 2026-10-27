@@ -44,6 +44,7 @@ pnpm tauri dev
 | --- | --- |
 | `Alt+←` / `Alt+→` | Back / forward |
 | `Alt+↑` | Go to parent folder |
+| Mouse back / forward buttons | Back / forward in the pane under the pointer |
 | `F5` | Refresh |
 | `↑` `↓` `Home` `End` | Move selection |
 | `Enter` | Open selected folder |
