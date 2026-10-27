@@ -6,7 +6,7 @@ use tauri::State;
 use super::dtos::{CommandErrorDto, DirectoryListingDto};
 use crate::domains::directory_browsing::application::ListDirectoryUseCase;
 
-#[tauri::command]
+#[tauri::command(async)]
 pub fn list_directory(
     use_case: State<'_, Arc<dyn ListDirectoryUseCase>>,
     path: Option<String>,
