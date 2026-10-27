@@ -86,4 +86,76 @@ describe("directory browsing store", () => {
 
     expect(store.getState().showHidden).toBe(true);
   });
+
+  describe("reload", () => {
+    const entry = (name: string) => ({
+      name,
+      path: `/home/${name}`,
+      kind: "file" as const,
+      isSymlink: false,
+      isHidden: false,
+      sizeInBytes: 1,
+      modifiedAtMillis: null,
+    });
+
+    it("updates the entries without showing the loading state and keeps the selection that still exists", async () => {
+      const listDirectory = vi
+        .fn()
+        .mockResolvedValueOnce({ path: "/home", parentPath: null, entries: [entry("a"), entry("b")] })
+        .mockResolvedValueOnce({ path: "/home", parentPath: null, entries: [entry("b"), entry("c")] });
+      const store = createDirectoryBrowsingStore({ listDirectory });
+      await store.getState().openDirectory("/home");
+      store.getState().selectOnly("/home/a");
+      store.getState().toggleSelection("/home/b");
+      const loadingStates: boolean[] = [];
+      store.subscribe((state) => loadingStates.push(state.isLoading));
+
+      await store.getState().reload();
+
+      expect(store.getState().listing?.entries.map((item) => item.name)).toEqual(["b", "c"]);
+      expect(store.getState().selectedPaths).toEqual(["/home/b"]);
+      expect(loadingStates).not.toContain(true);
+    });
+
+    it("does nothing before a folder is open", async () => {
+      const gateway = gatewayReturning(listingAt("/home"));
+      const store = createDirectoryBrowsingStore(gateway);
+
+      await store.getState().reload();
+
+      expect(gateway.listDirectory).not.toHaveBeenCalled();
+    });
+
+    it("drops a result that arrives after the user navigated elsewhere", async () => {
+      let resolveReload: (listing: DirectoryListing) => void = () => {};
+      const listDirectory = vi
+        .fn()
+        .mockResolvedValueOnce(listingAt("/home"))
+        .mockImplementationOnce(() => new Promise<DirectoryListing>((resolve) => (resolveReload = resolve)))
+        .mockResolvedValueOnce(listingAt("/other"));
+      const store = createDirectoryBrowsingStore({ listDirectory });
+      await store.getState().openDirectory("/home");
+
+      const pending = store.getState().reload();
+      await store.getState().openDirectory("/other");
+      resolveReload(listingAt("/home"));
+      await pending;
+
+      expect(store.getState().listing?.path).toBe("/other");
+    });
+
+    it("exposes the error when the folder can no longer be read", async () => {
+      const listDirectory = vi
+        .fn()
+        .mockResolvedValueOnce(listingAt("/home"))
+        .mockRejectedValueOnce({ kind: "notFound", message: "gone" });
+      const store = createDirectoryBrowsingStore({ listDirectory });
+      await store.getState().openDirectory("/home");
+
+      await store.getState().reload();
+
+      expect(store.getState().error).toEqual({ kind: "notFound", message: "gone" });
+      expect(store.getState().listing?.path).toBe("/home");
+    });
+  });
 });
