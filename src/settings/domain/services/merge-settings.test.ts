@@ -29,4 +29,15 @@ describe("mergeSettings", () => {
     expect(merged.preview).toMatchObject({ panelPosition: "bottom", showPanel: false, panelSizePx: 340 });
     expect(merged.preview.providers).toEqual(DEFAULT_SETTINGS.preview.providers);
   });
+
+  it("merges update preferences without touching the rest", () => {
+    const merged = mergeSettings(DEFAULT_SETTINGS, { updates: { autoDownload: true } });
+
+    expect(merged.updates).toEqual({ checkOnStartup: true, autoDownload: true });
+    expect(merged.preview).toEqual(DEFAULT_SETTINGS.preview);
+  });
+
+  it("keeps updates off by default except for the startup check", () => {
+    expect(DEFAULT_SETTINGS.updates).toEqual({ checkOnStartup: true, autoDownload: false });
+  });
 });

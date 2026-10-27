@@ -27,5 +27,6 @@ export function mergeSettings(settings: AppSettings, patch: SettingsPatch): AppS
       ...previewPatch,
       providers: mergeProviders(settings.preview.providers, providersPatch),
     },
+    updates: { ...settings.updates, ...patch.updates },
   };
 }

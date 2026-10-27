@@ -2,9 +2,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { createSettingsStore } from "../../application/stores/settings-store";
 import { SettingsProvider } from "../context/SettingsContext";
-import { SettingsView } from "./SettingsView";
+import { SettingsView, type ExtraSettingsSection } from "./SettingsView";
 
-function renderView() {
+function renderView(extraSections: ExtraSettingsSection[] = []) {
   const gateway = {
     loadSettings: vi.fn(),
     saveSettings: vi.fn().mockImplementation(async (settings) => settings),
@@ -13,7 +13,7 @@ function renderView() {
   store.getState().openSettings();
   render(
     <SettingsProvider store={store}>
-      <SettingsView />
+      <SettingsView extraSections={extraSections} />
     </SettingsProvider>,
   );
   return { store, gateway };
@@ -55,5 +55,14 @@ describe("SettingsView", () => {
     store.getState().openSettings();
     fireEvent.keyDown(screen.getByRole("heading", { name: "General" }), { key: "Escape" });
     expect(store.getState().isOpen).toBe(false);
+  });
+
+  it("shows the sections contributed by other features", () => {
+    renderView([{ id: "updates", label: "Updates", content: <p>Updates content</p> }]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Updates" }));
+
+    expect(screen.getByRole("heading", { name: "Updates" })).toBeTruthy();
+    expect(screen.getByText("Updates content")).toBeTruthy();
   });
 });
