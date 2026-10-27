@@ -3,8 +3,10 @@ import {
   tauriDirectoryGateway,
 } from "../directory-browsing";
 import { bindSearch } from "./bind-search";
+import { buildPaletteItems } from "./palette-sources";
 import { bindSettings } from "./bind-settings";
 import { createUpdatesStore, tauriUpdatesGateway } from "../app-updates";
+import { createCommandPaletteStore } from "../command-palette";
 import { createSearchStore, tauriSearchGateway } from "../folder-search";
 import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
@@ -98,11 +100,26 @@ export function composeApplication() {
         .push(`Version ${version} is ready to install. Open Settings > Updates to restart.`, "info"),
   });
 
+  const paletteStores = {
+    directoryBrowsingStore,
+    navigationStore,
+    fileOperationsStore,
+    fileClipboardStore,
+    settingsStore,
+    previewStore,
+    updatesStore,
+    searchStore,
+  };
+  const commandPaletteStore = createCommandPaletteStore({
+    getItems: (query) => buildPaletteItems(paletteStores, query),
+  });
+
   return {
     toastStore,
     previewStore,
     updatesStore,
     searchStore,
+    commandPaletteStore,
     previewGateway: tauriPreviewGateway,
     settingsStore,
     directoryBrowsingStore,

@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { UpdateBadge, UpdatesProvider, UpdatesSection, useUpdates } from "../app-updates";
 import {
+  CommandPalette,
+  CommandPaletteProvider,
+  useCommandPaletteShortcuts,
+} from "../command-palette";
+import {
   SearchBar,
   SearchProvider,
   SearchResults,
@@ -121,6 +126,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   const openQuickLook = usePreview((state) => state.openQuickLook);
   usePreviewShortcuts(isSettingsOpen);
   useSearchShortcuts(isSettingsOpen);
+  useCommandPaletteShortcuts(isSettingsOpen);
   useNavigationShortcuts(isSettingsOpen || isSearchOpen);
   useFileOperationShortcuts(isSettingsOpen || isSearchOpen);
   useClipboardShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen || isSearchOpen);
@@ -248,6 +254,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       <EntryContextMenu renderExtraItems={renderClipboardMenuItems} />
       <DeleteConfirmationDialog />
       <ConflictDialog />
+      <CommandPalette />
       <QuickLook
         target={previewTarget}
         onStep={stepQuickLook}
@@ -267,6 +274,7 @@ export function App() {
   return (
     <ToastProvider store={application.toastStore}>
       <SettingsProvider store={application.settingsStore}>
+      <CommandPaletteProvider store={application.commandPaletteStore}>
       <SearchProvider store={application.searchStore}>
       <UpdatesProvider store={application.updatesStore}>
       <PreviewProvider store={application.previewStore} gateway={application.previewGateway}>
@@ -286,6 +294,7 @@ export function App() {
       </PreviewProvider>
       </UpdatesProvider>
       </SearchProvider>
+      </CommandPaletteProvider>
       </SettingsProvider>
     </ToastProvider>
   );
