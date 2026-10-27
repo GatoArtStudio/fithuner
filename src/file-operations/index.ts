@@ -9,3 +9,4 @@ export {
   useFileOperations,
 } from "./presentation/context/FileOperationsContext";
 export { useFileOperationShortcuts } from "./presentation/hooks/useFileOperationShortcuts";
+export { fileNameOf } from "./domain/services/validate-entry-name";

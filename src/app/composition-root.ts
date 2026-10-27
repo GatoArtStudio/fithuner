@@ -3,6 +3,7 @@ import {
   tauriDirectoryGateway,
 } from "../directory-browsing";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
+import { createFileTransferStore, tauriFileTransferGateway } from "../file-transfer";
 import { createNavigationStore, tauriPlacesGateway } from "../navigation";
 import { createToastStore } from "../shared/notifications/toast-store";
 
@@ -24,5 +25,22 @@ export function composeApplication() {
     notifyError: (message) => toastStore.getState().push(message, "error"),
   });
 
-  return { toastStore, directoryBrowsingStore, navigationStore, fileOperationsStore };
+  const fileTransferStore = createFileTransferStore({
+    gateway: tauriFileTransferGateway,
+    refreshDirectory: () => directoryBrowsingStore.getState().refresh(),
+    notify: (message, tone) => toastStore.getState().push(message, tone),
+  });
+
+  function connectBackendEvents() {
+    return tauriFileTransferGateway.subscribeToTransfers(fileTransferStore.getState().handleEvent);
+  }
+
+  return {
+    toastStore,
+    directoryBrowsingStore,
+    navigationStore,
+    fileOperationsStore,
+    fileTransferStore,
+    connectBackendEvents,
+  };
 }

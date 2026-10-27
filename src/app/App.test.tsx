@@ -24,6 +24,14 @@ vi.mock("@tauri-apps/api/core", () => ({
   }),
 }));
 
+vi.mock("@tauri-apps/api/event", () => ({
+  listen: vi.fn(async () => () => {}),
+}));
+
+vi.mock("@tauri-apps/api/webview", () => ({
+  getCurrentWebview: () => ({ onDragDropEvent: vi.fn(async () => () => {}) }),
+}));
+
 import { App } from "./App";
 
 describe("App", () => {

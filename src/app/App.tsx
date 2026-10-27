@@ -14,6 +14,7 @@ import {
   useFileOperationShortcuts,
   useFileOperations,
 } from "../file-operations";
+import { ConflictDialog, FileTransferProvider, TransferPanel } from "../file-transfer";
 import {
   Breadcrumbs,
   NavigationControls,
@@ -27,7 +28,11 @@ import { ToastViewport } from "../shared/notifications/ToastViewport";
 import { composeApplication } from "./composition-root";
 import styles from "./App.module.css";
 
-function Explorer() {
+interface ExplorerProps {
+  connectBackendEvents: () => Promise<() => void>;
+}
+
+function Explorer({ connectBackendEvents }: ExplorerProps) {
   const loadPlaces = useNavigation((state) => state.loadPlaces);
   const navigateTo = useNavigation((state) => state.navigateTo);
   const renamingPath = useFileOperations((state) => state.renamingPath);
@@ -35,6 +40,19 @@ function Explorer() {
   const openContextMenu = useFileOperations((state) => state.openContextMenu);
   useNavigationShortcuts();
   useFileOperationShortcuts();
+
+  useEffect(() => {
+    let isDisposed = false;
+    let disconnect: (() => void) | undefined;
+    void connectBackendEvents().then((unsubscribe) => {
+      if (isDisposed) unsubscribe();
+      else disconnect = unsubscribe;
+    });
+    return () => {
+      isDisposed = true;
+      disconnect?.();
+    };
+  }, [connectBackendEvents]);
 
   useEffect(() => {
     void loadPlaces();
@@ -75,6 +93,8 @@ function Explorer() {
       </main>
       <EntryContextMenu />
       <PermanentDeleteDialog />
+      <ConflictDialog />
+      <TransferPanel />
       <ToastViewport />
     </div>
   );
@@ -88,7 +108,9 @@ export function App() {
       <DirectoryBrowsingProvider store={application.directoryBrowsingStore}>
         <NavigationProvider store={application.navigationStore}>
           <FileOperationsProvider store={application.fileOperationsStore}>
-            <Explorer />
+            <FileTransferProvider store={application.fileTransferStore}>
+              <Explorer connectBackendEvents={application.connectBackendEvents} />
+            </FileTransferProvider>
           </FileOperationsProvider>
         </NavigationProvider>
       </DirectoryBrowsingProvider>
