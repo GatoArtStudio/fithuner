@@ -73,11 +73,13 @@ import {
   useSettings,
   useSettingsShortcut,
 } from "../settings";
+import { TabBar, WorkspaceProvider, useWorkspace, useWorkspaceShortcuts } from "../workspace";
 import { DragAndDropProvider } from "../shared/drag-and-drop/DragAndDropContext";
 import { DragPreview } from "../shared/drag-and-drop/DragPreview";
 import { ToastProvider } from "../shared/notifications/ToastContext";
 import { ToastViewport } from "../shared/notifications/ToastViewport";
 import { ActiveSession } from "./ActiveSession";
+import { TabTitle } from "./TabTitle";
 import { composeApplication } from "./composition-root";
 import styles from "./App.module.css";
 
@@ -128,6 +130,8 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   useSearchShortcuts(isSettingsOpen);
   useCommandPaletteShortcuts(isSettingsOpen);
   useNavigationShortcuts(isSettingsOpen || isSearchOpen);
+  useWorkspaceShortcuts(isSettingsOpen);
+  const activePaneId = useWorkspace((state) => state.workspace.activePaneId);
   useFileOperationShortcuts(isSettingsOpen || isSearchOpen);
   useClipboardShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen || isSearchOpen);
 
@@ -190,6 +194,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       <div className={styles.shell} hidden={isSettingsOpen}>
         <Sidebar footer={<SettingsButton adornment={<UpdateBadge />} />} />
         <main className={styles.main}>
+          <TabBar paneId={activePaneId} renderTitle={(tab) => <TabTitle sessionId={tab.sessionId} />} />
           <header className={styles.toolbar}>
             <NavigationControls />
             <Breadcrumbs />
@@ -276,6 +281,7 @@ export function App() {
       <CommandPaletteProvider store={application.commandPaletteStore}>
       <UpdatesProvider store={application.updatesStore}>
       <PreviewProvider store={application.previewStore} gateway={application.previewGateway}>
+      <WorkspaceProvider store={application.workspaceStore}>
       <ActiveSession workspaceStore={application.workspaceStore}>
         <PlacesProvider store={application.placesStore}>
           <FileOperationsProvider store={application.fileOperationsStore}>
@@ -289,6 +295,7 @@ export function App() {
           </FileOperationsProvider>
         </PlacesProvider>
       </ActiveSession>
+      </WorkspaceProvider>
       </PreviewProvider>
       </UpdatesProvider>
       </CommandPaletteProvider>

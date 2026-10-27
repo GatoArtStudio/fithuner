@@ -7,3 +7,6 @@ export type {
   WorkspaceState,
   WorkspaceStore,
 } from "./application/stores/workspace-store";
+export { TabBar } from "./presentation/components/TabBar";
+export { WorkspaceProvider, useWorkspace } from "./presentation/context/WorkspaceContext";
+export { useWorkspaceShortcuts } from "./presentation/hooks/useWorkspaceShortcuts";
