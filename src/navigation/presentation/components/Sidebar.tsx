@@ -15,6 +15,7 @@ export function Sidebar() {
           key={`${place.kind}:${place.path}`}
           type="button"
           className={styles.place}
+          data-drop-path={place.path}
           aria-current={place.path === currentPath ? "page" : undefined}
           onClick={() => navigateTo(place.path)}
         >

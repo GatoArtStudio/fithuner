@@ -5,6 +5,11 @@ use std::sync::Arc;
 
 use domains::directory_browsing::application::{ListDirectory, ListDirectoryUseCase};
 use domains::directory_browsing::infrastructure::StdFileSystem;
+use domains::file_clipboard::application::{
+    ClearCutMarker, ClearCutMarkerUseCase, PlaceFilesOnClipboard, PlaceFilesOnClipboardUseCase,
+    ReadClipboardFiles, ReadClipboardFilesUseCase,
+};
+use domains::file_clipboard::infrastructure::{ClipboardRsAdapter, InMemoryCutMarker};
 use domains::file_operations::application::{
     CreateEntry, CreateEntryUseCase, DeleteEntriesPermanently, DeleteEntriesPermanentlyUseCase,
     OpenEntry, OpenEntryUseCase, RenameEntry, RenameEntryUseCase, TrashEntries,
@@ -13,6 +18,8 @@ use domains::file_operations::application::{
 use domains::file_operations::infrastructure::{
     StdEntryWriter, SystemFileOpener, TrashCrateAdapter,
 };
+use domains::file_transfer::application::{TransferEntries, TransferEntriesUseCase};
+use domains::file_transfer::infrastructure::StdTransferFileSystem;
 use domains::places::application::{ListPlaces, ListPlacesUseCase};
 use domains::places::infrastructure::OsPlacesProvider;
 
@@ -35,6 +42,22 @@ pub fn run() {
     let delete_entries_permanently: Arc<dyn DeleteEntriesPermanentlyUseCase> =
         Arc::new(DeleteEntriesPermanently::new(entry_writer));
 
+    let transfer_entries: Arc<dyn TransferEntriesUseCase> =
+        Arc::new(TransferEntries::new(Arc::new(StdTransferFileSystem)));
+    let transfer_sessions =
+        Arc::new(interface::tauri::file_transfer::sessions::TransferSessions::default());
+
+    let system_clipboard = Arc::new(ClipboardRsAdapter::new());
+    let cut_marker = Arc::new(InMemoryCutMarker::default());
+    let place_files_on_clipboard: Arc<dyn PlaceFilesOnClipboardUseCase> = Arc::new(
+        PlaceFilesOnClipboard::new(system_clipboard.clone(), cut_marker.clone()),
+    );
+    let read_clipboard_files: Arc<dyn ReadClipboardFilesUseCase> = Arc::new(
+        ReadClipboardFiles::new(system_clipboard, cut_marker.clone()),
+    );
+    let clear_cut_marker: Arc<dyn ClearCutMarkerUseCase> =
+        Arc::new(ClearCutMarker::new(cut_marker));
+
     ::tauri::Builder::default()
         .manage(list_directory)
         .manage(list_places)
@@ -43,6 +66,11 @@ pub fn run() {
         .manage(rename_entry)
         .manage(trash_entries)
         .manage(delete_entries_permanently)
+        .manage(transfer_entries)
+        .manage(transfer_sessions)
+        .manage(place_files_on_clipboard)
+        .manage(read_clipboard_files)
+        .manage(clear_cut_marker)
         .invoke_handler(::tauri::generate_handler![
             interface::tauri::directory_browsing::commands::list_directory,
             interface::tauri::places::commands::list_places,
@@ -50,7 +78,13 @@ pub fn run() {
             interface::tauri::file_operations::commands::create_entry,
             interface::tauri::file_operations::commands::rename_entry,
             interface::tauri::file_operations::commands::trash_entries,
-            interface::tauri::file_operations::commands::delete_entries_permanently
+            interface::tauri::file_operations::commands::delete_entries_permanently,
+            interface::tauri::file_transfer::commands::start_transfer,
+            interface::tauri::file_transfer::commands::cancel_transfer,
+            interface::tauri::file_transfer::commands::resolve_conflict,
+            interface::tauri::file_clipboard::commands::copy_files_to_clipboard,
+            interface::tauri::file_clipboard::commands::read_clipboard_files,
+            interface::tauri::file_clipboard::commands::clear_cut_marker
         ])
         .run(::tauri::generate_context!())
         .expect("error while running tauri application");
