@@ -1,4 +1,5 @@
 use crate::domains::file_operations::domain::NewEntryKind;
+use crate::domains::shared_kernel::naming::next_available_name;
 
 const DEFAULT_DIRECTORY_NAME: &str = "New folder";
 const DEFAULT_FILE_NAME: &str = "New file.txt";
@@ -7,28 +8,12 @@ pub struct UniqueNameGenerator;
 
 impl UniqueNameGenerator {
     pub fn generate(kind: NewEntryKind, existing_names: &[String]) -> String {
-        let base_name = match kind {
-            NewEntryKind::Directory => DEFAULT_DIRECTORY_NAME,
-            NewEntryKind::File => DEFAULT_FILE_NAME,
-        };
-        let (stem, extension) = match (kind, base_name.rfind('.')) {
-            (NewEntryKind::File, Some(dot_index)) => base_name.split_at(dot_index),
-            _ => (base_name, ""),
-        };
-
-        let is_taken = |candidate: &str| {
-            existing_names
-                .iter()
-                .any(|name| name.eq_ignore_ascii_case(candidate))
-        };
-
-        if !is_taken(base_name) {
-            return base_name.to_owned();
+        match kind {
+            NewEntryKind::Directory => {
+                next_available_name(DEFAULT_DIRECTORY_NAME, existing_names, false)
+            }
+            NewEntryKind::File => next_available_name(DEFAULT_FILE_NAME, existing_names, true),
         }
-        (2..)
-            .map(|number| format!("{stem} ({number}){extension}"))
-            .find(|candidate| !is_taken(candidate))
-            .expect("an unused numbered name always exists")
     }
 }
 
