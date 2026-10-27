@@ -8,6 +8,7 @@ A cross-platform file explorer focused on UI and UX, built with Tauri, React and
 - Copy, cut, paste and move with progress, cancellation and conflict resolution (replace, skip, keep both)
 - Drag and drop between folders, the sidebar and breadcrumbs, and drop files from other apps to copy them
 - System clipboard integration for files
+- Undo and redo (`Ctrl+Z`, `Ctrl+Shift+Z`) for rename, create, move, copy and move to trash
 - Folders refresh on their own when other programs change them, and your tabs come back after a restart
 - Tabs and a split view with two panes side by side: every tab keeps its own folder, history, selection and search, and files can be dragged or sent from one pane to the other
 - Search by name in the current folder and its subfolders, with type filters and results that stream in while the search runs
@@ -55,6 +56,7 @@ pnpm tauri dev
 | `Menu` / `Shift+F10` / right click | Context menu |
 | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` | Copy / cut / paste files |
 | `Ctrl+,` | Open settings |
+| `Ctrl+Z` / `Ctrl+Shift+Z` (or `Ctrl+Y`) | Undo / redo the last file operation |
 | `Ctrl+T` / `Ctrl+W` | New tab / close tab |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` (or `Ctrl+PageDown` / `Ctrl+PageUp`) | Next / previous tab |
 | `Ctrl+1` ... `Ctrl+9` | Go to that tab (`Ctrl+9` goes to the last one) |
@@ -80,6 +82,13 @@ pnpm tauri dev
 - Drag files onto the other pane (its empty area drops into its current folder), or use "Copy to the other pane" and "Move to the other pane" in the command palette.
 - Changes made in one pane refresh every pane, so a folder open in both always shows the latest files.
 - The next time you open Fithuner it brings back the tabs, folders, split view and divider position you had (history, sort order and selection start clean). A folder that no longer exists opens Home instead. Turn it off in Settings > General ("Restore tabs on startup").
+
+## Undo and redo
+- `Ctrl+Z` undoes the last file operation and `Ctrl+Shift+Z` (or `Ctrl+Y`) redoes it. They are also in the command palette ("Undo moving ..."). A short message tells you what was undone.
+- Covered: rename, new file or folder, move (including drag and drop between folders and panes), copy and paste, and move to trash. Permanent deletion cannot be undone, so it still asks first.
+- Undo never overwrites or deletes anything for good: if the name is taken, the file changed in the meantime or it cannot be restored, you get a message and the file stays as it is. Pasting over an existing file with "replace" cannot be undone.
+- Restoring from the trash works on Linux and Windows; macOS cannot restore items yet. Moving an item back to a folder on another drive is not supported.
+- The last 50 operations are kept while the app is open.
 
 ## Live folder updates
 - Folders that are open in any tab update by themselves when files are created, renamed or deleted by other programs, keeping your selection. Turn it off in Settings > General ("Update folders automatically").
