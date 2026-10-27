@@ -97,6 +97,8 @@ async function createStores() {
         renameEntry: vi.fn(),
         trashEntries: vi.fn().mockResolvedValue({ succeeded: [], failed: [] }),
         deleteEntriesPermanently: vi.fn(),
+        moveEntries: vi.fn(),
+        restoreEntries: vi.fn(),
       },
       directory,
       notifyError: vi.fn(),

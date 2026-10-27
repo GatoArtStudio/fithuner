@@ -14,6 +14,8 @@ function setup(
     renameEntry: vi.fn().mockResolvedValue("/docs/renamed.txt"),
     trashEntries: vi.fn().mockResolvedValue({ succeeded: selected, failed: [] }),
     deleteEntriesPermanently: vi.fn().mockResolvedValue({ succeeded: selected, failed: [] }),
+    moveEntries: vi.fn().mockResolvedValue({ succeeded: [], failed: [] }),
+    restoreEntries: vi.fn().mockResolvedValue({ succeeded: [], failed: [] }),
     ...gatewayOverrides,
   };
   const directory = {

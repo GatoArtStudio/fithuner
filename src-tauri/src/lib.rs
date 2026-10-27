@@ -21,8 +21,8 @@ use domains::file_clipboard::application::{
 use domains::file_clipboard::infrastructure::{ClipboardRsAdapter, InMemoryCutMarker};
 use domains::file_operations::application::{
     CreateEntry, CreateEntryUseCase, DeleteEntriesPermanently, DeleteEntriesPermanentlyUseCase,
-    OpenEntry, OpenEntryUseCase, RenameEntry, RenameEntryUseCase, TrashEntries,
-    TrashEntriesUseCase,
+    MoveEntries, MoveEntriesUseCase, OpenEntry, OpenEntryUseCase, RenameEntry, RenameEntryUseCase,
+    RestoreEntries, RestoreEntriesUseCase, TrashEntries, TrashEntriesUseCase,
 };
 use domains::file_operations::infrastructure::{
     StdEntryWriter, SystemFileOpener, TrashCrateAdapter,
@@ -66,8 +66,13 @@ pub fn run() {
         Arc::new(CreateEntry::new(entry_writer.clone()));
     let rename_entry: Arc<dyn RenameEntryUseCase> =
         Arc::new(RenameEntry::new(entry_writer.clone()));
+    let trash_adapter = Arc::new(TrashCrateAdapter);
     let trash_entries: Arc<dyn TrashEntriesUseCase> =
-        Arc::new(TrashEntries::new(Arc::new(TrashCrateAdapter)));
+        Arc::new(TrashEntries::new(trash_adapter.clone()));
+    let restore_entries: Arc<dyn RestoreEntriesUseCase> =
+        Arc::new(RestoreEntries::new(trash_adapter));
+    let move_entries: Arc<dyn MoveEntriesUseCase> =
+        Arc::new(MoveEntries::new(entry_writer.clone()));
     let delete_entries_permanently: Arc<dyn DeleteEntriesPermanentlyUseCase> =
         Arc::new(DeleteEntriesPermanently::new(entry_writer));
 
@@ -154,6 +159,8 @@ pub fn run() {
         .manage(create_entry)
         .manage(rename_entry)
         .manage(trash_entries)
+        .manage(restore_entries)
+        .manage(move_entries)
         .manage(delete_entries_permanently)
         .manage(transfer_entries)
         .manage(transfer_sessions)
@@ -179,6 +186,8 @@ pub fn run() {
             interface::tauri::file_operations::commands::rename_entry,
             interface::tauri::file_operations::commands::trash_entries,
             interface::tauri::file_operations::commands::delete_entries_permanently,
+            interface::tauri::file_operations::commands::move_entries,
+            interface::tauri::file_operations::commands::restore_entries,
             interface::tauri::file_transfer::commands::start_transfer,
             interface::tauri::file_transfer::commands::cancel_transfer,
             interface::tauri::file_transfer::commands::resolve_conflict,

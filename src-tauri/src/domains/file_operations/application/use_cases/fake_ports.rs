@@ -10,6 +10,7 @@ use crate::domains::file_operations::domain::FileOperationError;
 #[derive(Default)]
 pub struct InMemoryEntries {
     paths: Mutex<BTreeSet<PathBuf>>,
+    trashed: Mutex<BTreeSet<PathBuf>>,
     opened: Mutex<Vec<PathBuf>>,
 }
 
@@ -17,12 +18,17 @@ impl InMemoryEntries {
     pub fn with_entries(paths: &[&str]) -> Self {
         Self {
             paths: Mutex::new(paths.iter().map(PathBuf::from).collect()),
+            trashed: Mutex::default(),
             opened: Mutex::default(),
         }
     }
 
     pub fn contains(&self, path: &str) -> bool {
         self.paths.lock().unwrap().contains(Path::new(path))
+    }
+
+    pub fn create_back(&self, path: &str) {
+        self.paths.lock().unwrap().insert(PathBuf::from(path));
     }
 
     pub fn opened_paths(&self) -> Vec<PathBuf> {
@@ -75,7 +81,21 @@ impl EntryWriterPort for InMemoryEntries {
 
 impl TrashPort for InMemoryEntries {
     fn move_to_trash(&self, path: &Path) -> Result<(), FileOperationError> {
-        self.delete_permanently(path)
+        self.delete_permanently(path)?;
+        self.trashed.lock().unwrap().insert(path.to_path_buf());
+        Ok(())
+    }
+
+    fn restore(&self, path: &Path) -> Result<(), FileOperationError> {
+        if !self.trashed.lock().unwrap().contains(path) {
+            return Err(FileOperationError::NotFound);
+        }
+        if self.paths.lock().unwrap().contains(path) {
+            return Err(FileOperationError::AlreadyExists);
+        }
+        self.trashed.lock().unwrap().remove(path);
+        self.paths.lock().unwrap().insert(path.to_path_buf());
+        Ok(())
     }
 }
 

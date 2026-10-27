@@ -4,7 +4,7 @@ mod errors;
 mod services;
 mod value_objects;
 
-pub use entities::BatchOutcome;
+pub use entities::{BatchOutcome, EntryMove};
 pub use enums::NewEntryKind;
 pub use errors::FileOperationError;
 pub use services::UniqueNameGenerator;

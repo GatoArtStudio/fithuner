@@ -8,4 +8,6 @@ export const tauriFileOperationsGateway: FileOperationsGateway = {
   renameEntry: (path, newName) => invoke<string>("rename_entry", { path, newName }),
   trashEntries: (paths) => invoke<BatchOutcome>("trash_entries", { paths }),
   deleteEntriesPermanently: (paths) => invoke<BatchOutcome>("delete_entries_permanently", { paths }),
+  moveEntries: (moves) => invoke<BatchOutcome>("move_entries", { moves }),
+  restoreEntries: (paths) => invoke<BatchOutcome>("restore_entries", { paths }),
 };
