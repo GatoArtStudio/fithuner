@@ -1,4 +1,5 @@
 import { useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from "react";
+import { blockSelection } from "../../../shared/drag-and-drop/block-selection";
 import { ContextMenu, type ContextMenuItem } from "../../../shared/components/ContextMenu";
 import { Icon } from "../../../shared/icons/Icon";
 import type { Tab } from "../../domain/entities/tab";
@@ -46,6 +47,7 @@ export function TabBar({ paneId, renderTitle, isActivePane = true, trailing }: T
   const moveTabToOtherPane = useWorkspace((state) => state.moveTabToOtherPane);
   const tabListRef = useRef<HTMLDivElement>(null);
   const drag = useRef<TabDrag | null>(null);
+  const releaseSelection = useRef<(() => void) | null>(null);
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
   const [menu, setMenu] = useState<TabMenu | null>(null);
 
@@ -61,6 +63,8 @@ export function TabBar({ paneId, renderTitle, isActivePane = true, trailing }: T
   function handlePointerDown(event: PointerEvent<HTMLDivElement>, tabId: string) {
     if (event.button !== 0) return;
     drag.current = { tabId, startX: event.clientX, isDragging: false };
+    releaseSelection.current?.();
+    releaseSelection.current = blockSelection();
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -88,6 +92,8 @@ export function TabBar({ paneId, renderTitle, isActivePane = true, trailing }: T
   function finishDrag(event: PointerEvent<HTMLDivElement>) {
     const current = drag.current;
     drag.current = null;
+    releaseSelection.current?.();
+    releaseSelection.current = null;
     setDraggingTabId(null);
     if (!current?.isDragging) return;
     const targetPaneId = paneUnderPointer(event.clientX, event.clientY);

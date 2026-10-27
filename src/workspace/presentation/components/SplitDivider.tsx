@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { blockSelection } from "../../../shared/drag-and-drop/block-selection";
 import { MAX_SPLIT_RATIO, MIN_SPLIT_RATIO } from "../../domain/entities/workspace";
 import { useWorkspace } from "../context/WorkspaceContext";
 import styles from "./SplitDivider.module.css";
@@ -9,6 +10,13 @@ export function SplitDivider() {
   const ratio = useWorkspace((state) => state.workspace.splitRatio);
   const setSplitRatio = useWorkspace((state) => state.setSplitRatio);
   const isDragging = useRef(false);
+  const releaseSelection = useRef<(() => void) | null>(null);
+
+  function stopDragging() {
+    isDragging.current = false;
+    releaseSelection.current?.();
+    releaseSelection.current = null;
+  }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
     if (!isDragging.current) return;
@@ -38,11 +46,12 @@ export function SplitDivider() {
       tabIndex={0}
       onPointerDown={(event) => {
         isDragging.current = true;
+        releaseSelection.current = blockSelection();
         event.currentTarget.setPointerCapture(event.pointerId);
       }}
       onPointerMove={handlePointerMove}
-      onPointerUp={() => (isDragging.current = false)}
-      onPointerCancel={() => (isDragging.current = false)}
+      onPointerUp={stopDragging}
+      onPointerCancel={stopDragging}
       onKeyDown={handleKeyDown}
     />
   );
