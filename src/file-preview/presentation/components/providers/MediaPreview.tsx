@@ -40,11 +40,11 @@ export function MediaPreview({ target, media, onOpenExternally }: MediaPreviewPr
   return (
     <div className={styles.frame}>
       {media === "video" ? (
-        <video className={styles.video} src={url} controls autoPlay onError={() => setHasFailed(true)} />
+        <video className={styles.video} src={url} crossOrigin="anonymous" controls autoPlay onError={() => setHasFailed(true)} />
       ) : (
         <>
           <p className={styles.audioName}>{target.name}</p>
-          <audio className={styles.audio} src={url} controls autoPlay onError={() => setHasFailed(true)} />
+          <audio className={styles.audio} src={url} crossOrigin="anonymous" controls autoPlay onError={() => setHasFailed(true)} />
         </>
       )}
     </div>

@@ -27,6 +27,7 @@ export function ImagePreview({ target, onOpenExternally }: ProviderProps) {
       <img
         className={styles.image}
         src={url}
+        crossOrigin="anonymous"
         alt={target.name}
         draggable={false}
         onLoad={(event) =>

@@ -20,6 +20,7 @@ describe("PreviewBody", () => {
 
     const image = screen.getByRole("img", { name: "photo.png" });
     expect(image.getAttribute("src")).toBe("asset:///files/photo.png");
+    expect(image.getAttribute("crossorigin")).toBe("anonymous");
   });
 
   it("offers the default app when an image cannot be displayed", async () => {

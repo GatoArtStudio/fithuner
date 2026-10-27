@@ -25,7 +25,9 @@ describe("MediaPreview", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Play video" }));
 
-    expect(document.querySelector("video")?.getAttribute("src")).toBe("asset:///files/clip.mp4");
+    const video = document.querySelector("video");
+    expect(video?.getAttribute("src")).toBe("asset:///files/clip.mp4");
+    expect(video?.getAttribute("crossorigin")).toBe("anonymous");
   });
 
   it("uses an audio element for audio files", async () => {
@@ -33,7 +35,7 @@ describe("MediaPreview", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Play audio" }));
 
-    expect(document.querySelector("audio")).not.toBeNull();
+    expect(document.querySelector("audio")?.getAttribute("crossorigin")).toBe("anonymous");
   });
 
   it("points to the GStreamer plugins and the default app when playback fails", async () => {
