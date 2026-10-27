@@ -12,3 +12,5 @@ export type { FileEntry } from "./domain/entities/file-entry";
 export { FolderStatusBar } from "./presentation/components/FolderStatusBar";
 export { ShowHiddenToggle } from "./presentation/components/ShowHiddenToggle";
 export { formatFileSize, formatModifiedDate } from "./presentation/formatters/formatters";
+export { useSelectedEntry, useSelectionCount } from "./presentation/hooks/useSelection";
+export { useVisibleEntries } from "./presentation/hooks/useVisibleEntries";

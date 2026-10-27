@@ -13,6 +13,11 @@
   --color-danger-surface: #fef3f2;
   --color-popover: #ffffff;
   --shadow-popover: 0 8px 24px rgb(0 0 0 / 18%);
+  --syntax-keyword: #8f3fb8;
+  --syntax-string: #1a7f37;
+  --syntax-number: #b35900;
+  --syntax-function: #0b62d6;
+  --syntax-variable: #a3314b;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -44,6 +49,11 @@
     --color-danger-surface: #3a1715;
     --color-popover: #262a31;
     --shadow-popover: 0 8px 24px rgb(0 0 0 / 50%);
+    --syntax-keyword: #d2a8ff;
+    --syntax-string: #7ee787;
+    --syntax-number: #ffa657;
+    --syntax-function: #79c0ff;
+    --syntax-variable: #ff7b9c;
   }
 }
 
@@ -65,4 +75,9 @@
   --color-danger-surface: #3a1715;
   --color-popover: #262a31;
   --shadow-popover: 0 8px 24px rgb(0 0 0 / 50%);
+  --syntax-keyword: #d2a8ff;
+  --syntax-string: #7ee787;
+  --syntax-number: #ffa657;
+  --syntax-function: #79c0ff;
+  --syntax-variable: #ff7b9c;
 }

@@ -18,6 +18,10 @@ use domains::file_operations::application::{
 use domains::file_operations::infrastructure::{
     StdEntryWriter, SystemFileOpener, TrashCrateAdapter,
 };
+use domains::file_preview::application::{
+    ReadTextPreview, ReadTextPreviewUseCase, SummarizeFolder, SummarizeFolderUseCase,
+};
+use domains::file_preview::infrastructure::StdPreviewSource;
 use domains::file_transfer::application::{TransferEntries, TransferEntriesUseCase};
 use domains::file_transfer::infrastructure::StdTransferFileSystem;
 use domains::places::application::{ListPlaces, ListPlacesUseCase};
@@ -29,6 +33,9 @@ use domains::settings::infrastructure::JsonSettingsRepository;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let _ = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn"))
+        .try_init();
+
     let entry_writer = Arc::new(StdEntryWriter);
 
     let list_directory: Arc<dyn ListDirectoryUseCase> =
@@ -72,6 +79,12 @@ pub fn run() {
     let save_settings: Arc<dyn SaveSettingsUseCase> =
         Arc::new(SaveSettings::new(settings_repository));
 
+    let preview_source = Arc::new(StdPreviewSource);
+    let read_text_preview: Arc<dyn ReadTextPreviewUseCase> =
+        Arc::new(ReadTextPreview::new(preview_source.clone()));
+    let summarize_folder: Arc<dyn SummarizeFolderUseCase> =
+        Arc::new(SummarizeFolder::new(preview_source));
+
     ::tauri::Builder::default()
         .manage(list_directory)
         .manage(list_places)
@@ -87,6 +100,8 @@ pub fn run() {
         .manage(clear_cut_marker)
         .manage(load_settings)
         .manage(save_settings)
+        .manage(read_text_preview)
+        .manage(summarize_folder)
         .invoke_handler(::tauri::generate_handler![
             interface::tauri::directory_browsing::commands::list_directory,
             interface::tauri::places::commands::list_places,
@@ -102,7 +117,9 @@ pub fn run() {
             interface::tauri::file_clipboard::commands::read_clipboard_files,
             interface::tauri::file_clipboard::commands::clear_cut_marker,
             interface::tauri::settings::commands::load_settings,
-            interface::tauri::settings::commands::save_settings
+            interface::tauri::settings::commands::save_settings,
+            interface::tauri::file_preview::commands::read_text_preview,
+            interface::tauri::file_preview::commands::summarize_folder
         ])
         .run(::tauri::generate_context!())
         .expect("error while running tauri application");

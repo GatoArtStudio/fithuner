@@ -4,6 +4,7 @@ import type { SettingsGateway } from "../ports/settings-gateway";
 import { createSettingsStore } from "./settings-store";
 
 const darkSettings: AppSettings = {
+  ...DEFAULT_SETTINGS,
   appearance: { theme: "dark" },
   browsing: { showHiddenFiles: true, confirmBeforeTrash: false },
 };
@@ -70,6 +71,7 @@ describe("settings store", () => {
     await Promise.all([first, second]);
 
     expect(store.getState().settings).toEqual({
+      ...darkSettings,
       appearance: { theme: "light" },
       browsing: { showHiddenFiles: true, confirmBeforeTrash: true },
     });
@@ -85,5 +87,15 @@ describe("settings store", () => {
 
     store.getState().closeSettings();
     expect(store.getState().isOpen).toBe(false);
+  });
+
+  it("fills in settings missing from an older backend answer with the defaults", async () => {
+    const olderAnswer = { appearance: { theme: "dark" }, browsing: DEFAULT_SETTINGS.browsing } as AppSettings;
+    const { store } = setup({ loadSettings: vi.fn().mockResolvedValue(olderAnswer) });
+
+    await store.getState().load();
+
+    expect(store.getState().settings.appearance.theme).toBe("dark");
+    expect(store.getState().settings.preview).toEqual(DEFAULT_SETTINGS.preview);
   });
 });

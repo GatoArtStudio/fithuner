@@ -4,11 +4,13 @@ import type { SettingsSection } from "../../domain/entities/app-settings";
 import { useSettings } from "../context/SettingsContext";
 import { AppearanceSection } from "./sections/AppearanceSection";
 import { GeneralSection } from "./sections/GeneralSection";
+import { PreviewSection } from "./sections/PreviewSection";
 import styles from "./SettingsView.module.css";
 
 const SECTIONS: { id: SettingsSection; label: string }[] = [
   { id: "general", label: "General" },
   { id: "appearance", label: "Appearance" },
+  { id: "preview", label: "Preview" },
 ];
 
 export function SettingsView() {
@@ -55,6 +57,7 @@ export function SettingsView() {
         </h1>
         {activeSection === "general" && <GeneralSection />}
         {activeSection === "appearance" && <AppearanceSection />}
+        {activeSection === "preview" && <PreviewSection />}
       </main>
     </div>
   );

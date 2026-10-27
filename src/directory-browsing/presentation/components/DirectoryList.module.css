@@ -3,6 +3,7 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
+  container-type: inline-size;
 }
 
 .header,
@@ -18,6 +19,30 @@
   border-bottom: 1px solid var(--color-border);
   height: 32px;
   flex-shrink: 0;
+}
+
+@container (max-width: 640px) {
+  .header,
+  .row {
+    grid-template-columns: minmax(140px, 1fr) 170px;
+  }
+
+  .header > :nth-child(n + 3),
+  .row > :nth-child(n + 3) {
+    display: none;
+  }
+}
+
+@container (max-width: 400px) {
+  .header,
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .header > :nth-child(n + 2),
+  .row > :nth-child(n + 2) {
+    display: none;
+  }
 }
 
 .headerCell {

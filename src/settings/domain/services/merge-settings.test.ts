@@ -15,4 +15,18 @@ describe("mergeSettings", () => {
 
     expect(DEFAULT_SETTINGS.appearance.theme).toBe("system");
   });
+
+  it("merges a single provider without touching the others", () => {
+    const merged = mergeSettings(DEFAULT_SETTINGS, { preview: { providers: { csv: { maxSizeMegabytes: 12 } } } });
+
+    expect(merged.preview.providers.csv).toEqual({ enabled: true, maxSizeMegabytes: 12 });
+    expect(merged.preview.providers.pdf).toEqual(DEFAULT_SETTINGS.preview.providers.pdf);
+  });
+
+  it("merges panel options while keeping the providers", () => {
+    const merged = mergeSettings(DEFAULT_SETTINGS, { preview: { panelPosition: "bottom", showPanel: false } });
+
+    expect(merged.preview).toMatchObject({ panelPosition: "bottom", showPanel: false, panelSizePx: 340 });
+    expect(merged.preview.providers).toEqual(DEFAULT_SETTINGS.preview.providers);
+  });
 });

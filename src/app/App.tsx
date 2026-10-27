@@ -1,4 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  PreviewPanel,
+  PreviewProvider,
+  QuickLook,
+  usePreview,
+  PreviewToggleButton,
+  usePreviewLayout,
+  usePreviewShortcuts,
+  type PreviewTarget,
+} from "../file-preview";
 import {
   FileClipboardProvider,
   useClipboardMenuItems,
@@ -10,6 +20,10 @@ import {
   DirectoryList,
   FolderStatusBar,
   ShowHiddenToggle,
+  useDirectoryBrowsing,
+  useSelectedEntry,
+  useSelectionCount,
+  useVisibleEntries,
   type FileEntry,
 } from "../directory-browsing";
 import {
@@ -66,6 +80,24 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   const isSettingsOpen = useSettings((state) => state.isOpen);
   useApplyTheme();
   useSettingsShortcut();
+  const selectedEntry = useSelectedEntry();
+  const selectionCount = useSelectionCount();
+  const previewLayout = usePreviewLayout();
+  const previewTarget = useMemo<PreviewTarget | null>(
+    () =>
+      selectedEntry && {
+        path: selectedEntry.path,
+        name: selectedEntry.name,
+        kind: selectedEntry.kind,
+        sizeInBytes: selectedEntry.sizeInBytes,
+        modifiedAtMillis: selectedEntry.modifiedAtMillis,
+      },
+    [selectedEntry],
+  );
+  const visibleEntries = useVisibleEntries();
+  const selectOnly = useDirectoryBrowsing((state) => state.selectOnly);
+  const openQuickLook = usePreview((state) => state.openQuickLook);
+  usePreviewShortcuts(isSettingsOpen);
   useNavigationShortcuts(isSettingsOpen);
   useFileOperationShortcuts(isSettingsOpen);
   useClipboardShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen);
@@ -92,6 +124,12 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
     void navigateTo(undefined);
   }, [loadPlaces, navigateTo]);
 
+  function stepQuickLook(delta: 1 | -1) {
+    const currentIndex = visibleEntries.findIndex((entry) => entry.path === selectedEntry?.path);
+    const next = visibleEntries[currentIndex + delta];
+    if (next) selectOnly(next.path);
+  }
+
   function handleOpenEntry(entry: FileEntry) {
     if (entry.kind === "directory") void navigateTo(entry.path);
     else void openEntry(entry.path);
@@ -106,8 +144,14 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
             <NavigationControls />
             <Breadcrumbs />
             <ShowHiddenToggle />
+            <PreviewToggleButton />
           </header>
-          <div className={styles.content}>
+          <div
+            className={styles.content}
+            data-panel={previewLayout.isPanelVisible ? previewLayout.position : "none"}
+            style={{ "--panel-size": `${previewLayout.sizePx}px` } as React.CSSProperties}
+          >
+            <div className={styles.listArea}>
             <DirectoryList
               onOpenEntry={handleOpenEntry}
               onContextMenu={(entry, position) =>
@@ -117,11 +161,18 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
                 })
               }
               isEntryDimmed={(entry) => cutPaths.includes(entry.path)}
+            onQuickLook={previewLayout.isQuickLookEnabled ? () => openQuickLook() : undefined}
               renderNameEditor={(entry) =>
                 entry.path === renamingPath ? (
                   <InlineRenameInput initialName={entry.name} isDirectory={entry.kind === "directory"} />
                 ) : null
               }
+            />
+            </div>
+            <PreviewPanel
+              target={previewTarget}
+              selectionCount={selectionCount}
+              onOpenExternally={(path) => void openEntry(path)}
             />
           </div>
           <FolderStatusBar />
@@ -131,6 +182,11 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       <EntryContextMenu renderExtraItems={renderClipboardMenuItems} />
       <DeleteConfirmationDialog />
       <ConflictDialog />
+      <QuickLook
+        target={previewTarget}
+        onStep={stepQuickLook}
+        onOpenExternally={(path) => void openEntry(path)}
+      />
       <TransferPanel />
       <ExternalDropOverlay />
       <DragPreview />
@@ -145,6 +201,7 @@ export function App() {
   return (
     <ToastProvider store={application.toastStore}>
       <SettingsProvider store={application.settingsStore}>
+      <PreviewProvider store={application.previewStore} gateway={application.previewGateway}>
       <DirectoryBrowsingProvider store={application.directoryBrowsingStore}>
         <NavigationProvider store={application.navigationStore}>
           <FileOperationsProvider store={application.fileOperationsStore}>
@@ -158,6 +215,7 @@ export function App() {
           </FileOperationsProvider>
         </NavigationProvider>
       </DirectoryBrowsingProvider>
+      </PreviewProvider>
       </SettingsProvider>
     </ToastProvider>
   );

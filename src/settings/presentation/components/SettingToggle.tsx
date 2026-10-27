@@ -5,10 +5,11 @@ interface SettingToggleProps {
   label: string;
   description: string;
   checked: boolean;
+  disabled?: boolean;
   onChange: (checked: boolean) => void;
 }
 
-export function SettingToggle({ label, description, checked, onChange }: SettingToggleProps) {
+export function SettingToggle({ label, description, checked, disabled, onChange }: SettingToggleProps) {
   const descriptionId = useId();
 
   return (
@@ -23,6 +24,7 @@ export function SettingToggle({ label, description, checked, onChange }: Setting
         type="button"
         role="switch"
         aria-checked={checked}
+        disabled={disabled}
         aria-label={label}
         aria-describedby={descriptionId}
         className={`${styles.switch} ${checked ? styles.on : ""}`}

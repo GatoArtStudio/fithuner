@@ -1,0 +1,22 @@
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--color-background);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.onRight {
+  border-left: 1px solid var(--color-border);
+}
+
+.onBottom {
+  border-top: 1px solid var(--color-border);
+}

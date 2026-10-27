@@ -16,6 +16,10 @@
   "dependencies": {
     "@tanstack/react-virtual": "^3.14.22",
     "@tauri-apps/api": "^2",
+    "dompurify": "^3.4.17",
+    "highlight.js": "^11.12.0",
+    "marked": "^18.1.1",
+    "pdfjs-dist": "^6.4.299",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zustand": "^5.0.16"

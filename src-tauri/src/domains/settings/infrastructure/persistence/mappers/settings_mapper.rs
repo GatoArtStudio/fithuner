@@ -1,3 +1,4 @@
+use super::preview_mapper::{preview_to_domain, preview_to_model};
 use crate::domains::settings::domain::{
     AppSettings, AppearanceSettings, BrowsingSettings, ThemePreference,
 };
@@ -21,6 +22,7 @@ pub fn to_model(settings: &AppSettings) -> SettingsModel {
             show_hidden_files: settings.browsing.show_hidden_files,
             confirm_before_trash: settings.browsing.confirm_before_trash,
         },
+        preview: preview_to_model(&settings.preview),
     }
 }
 
@@ -37,12 +39,14 @@ pub fn to_domain(model: SettingsModel) -> AppSettings {
             show_hidden_files: model.browsing.show_hidden_files,
             confirm_before_trash: model.browsing.confirm_before_trash,
         },
+        preview: preview_to_domain(model.preview),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domains::settings::domain::PreviewSettings;
 
     #[test]
     fn round_trips_every_setting() {
@@ -54,9 +58,18 @@ mod tests {
                 show_hidden_files: true,
                 confirm_before_trash: true,
             },
+            preview: PreviewSettings {
+                quick_look_enabled: false,
+                ..PreviewSettings::default()
+            },
         };
 
         assert_eq!(to_domain(to_model(&settings)), settings);
+    }
+
+    #[test]
+    fn an_empty_model_maps_to_the_default_settings() {
+        assert_eq!(to_domain(SettingsModel::default()), AppSettings::default());
     }
 
     #[test]

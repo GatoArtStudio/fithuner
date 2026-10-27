@@ -5,6 +5,7 @@ interface SettingSelectProps<Value extends string> {
   label: string;
   description: string;
   value: Value;
+  disabled?: boolean;
   options: { value: Value; label: string }[];
   onChange: (value: Value) => void;
 }
@@ -13,6 +14,7 @@ export function SettingSelect<Value extends string>({
   label,
   description,
   value,
+  disabled,
   options,
   onChange,
 }: SettingSelectProps<Value>) {
@@ -30,6 +32,7 @@ export function SettingSelect<Value extends string>({
         id={selectId}
         className={styles.select}
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value as Value)}
       >
         {options.map((option) => (
