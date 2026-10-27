@@ -4,6 +4,7 @@ import type { SettingsGateway } from "../ports/settings-gateway";
 import { createSettingsStore } from "./settings-store";
 
 const darkSettings: AppSettings = {
+  ...DEFAULT_SETTINGS,
   appearance: { theme: "dark" },
   browsing: { showHiddenFiles: true, confirmBeforeTrash: false },
 };
@@ -70,6 +71,7 @@ describe("settings store", () => {
     await Promise.all([first, second]);
 
     expect(store.getState().settings).toEqual({
+      ...darkSettings,
       appearance: { theme: "light" },
       browsing: { showHiddenFiles: true, confirmBeforeTrash: true },
     });
