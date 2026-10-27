@@ -1,12 +1,18 @@
+import { lazy, Suspense } from "react";
 import { formatFileSize } from "../../../directory-browsing";
 import { useSettings } from "../../../settings";
 import type { PreviewDecision, PreviewKind, PreviewTarget } from "../../domain/entities/preview";
 import { decidePreview } from "../../domain/services/decide-preview";
 import { usePreview } from "../context/PreviewContext";
+import { CsvPreview } from "./providers/CsvPreview";
 import { ImagePreview } from "./providers/ImagePreview";
+import { JsonPreview } from "./providers/JsonPreview";
 import { MediaPreview } from "./providers/MediaPreview";
 import type { PreviewVariant, ProviderProps } from "./providers/ProviderProps";
-import { PreviewAction, PreviewMessage } from "./PreviewStates";
+import { TextPreview } from "./providers/TextPreview";
+import { PreviewAction, PreviewLoading, PreviewMessage } from "./PreviewStates";
+
+const MarkdownPreview = lazy(() => import("./providers/MarkdownPreview"));
 
 const KIND_LABELS: Record<PreviewKind, string> = {
   image: "images",
@@ -31,6 +37,18 @@ function renderProvider(kind: PreviewKind, props: ProviderProps) {
   switch (kind) {
     case "image":
       return <ImagePreview {...props} />;
+    case "text":
+      return <TextPreview {...props} />;
+    case "markdown":
+      return (
+        <Suspense fallback={<PreviewLoading />}>
+          <MarkdownPreview {...props} />
+        </Suspense>
+      );
+    case "json":
+      return <JsonPreview {...props} />;
+    case "csv":
+      return <CsvPreview {...props} />;
     case "audio":
       return <MediaPreview {...props} media="audio" />;
     case "video":

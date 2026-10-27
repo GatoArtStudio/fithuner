@@ -1,0 +1,76 @@
+.frame {
+  min-height: 100%;
+}
+
+.code {
+  margin: 0;
+  padding: var(--space-3);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  tab-size: 4;
+  user-select: text;
+  white-space: pre-wrap;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.notice {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.code :global(.hljs-comment),
+.code :global(.hljs-quote) {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.code :global(.hljs-keyword),
+.code :global(.hljs-selector-tag),
+.code :global(.hljs-literal),
+.code :global(.hljs-built_in) {
+  color: var(--syntax-keyword);
+}
+
+.code :global(.hljs-string),
+.code :global(.hljs-regexp),
+.code :global(.hljs-addition) {
+  color: var(--syntax-string);
+}
+
+.code :global(.hljs-number),
+.code :global(.hljs-attr),
+.code :global(.hljs-attribute),
+.code :global(.hljs-symbol) {
+  color: var(--syntax-number);
+}
+
+.code :global(.hljs-title),
+.code :global(.hljs-section),
+.code :global(.hljs-function),
+.code :global(.hljs-type),
+.code :global(.hljs-class) {
+  color: var(--syntax-function);
+}
+
+.code :global(.hljs-variable),
+.code :global(.hljs-template-variable),
+.code :global(.hljs-name),
+.code :global(.hljs-tag) {
+  color: var(--syntax-variable);
+}
+
+.code :global(.hljs-deletion) {
+  color: var(--color-danger);
+}

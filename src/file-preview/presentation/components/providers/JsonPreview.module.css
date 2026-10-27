@@ -1,0 +1,45 @@
+.tree {
+  padding: var(--space-3);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  user-select: text;
+}
+
+.children {
+  margin-left: var(--space-3);
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--color-border);
+}
+
+.summary {
+  cursor: pointer;
+}
+
+.leaf {
+  padding-left: 14px;
+  overflow-wrap: anywhere;
+}
+
+.key {
+  color: var(--syntax-variable);
+}
+
+.container {
+  color: var(--color-text-muted);
+}
+
+.string {
+  color: var(--syntax-string);
+}
+
+.number,
+.boolean,
+.null {
+  color: var(--syntax-number);
+}
+
+.more {
+  padding-left: 14px;
+  color: var(--color-text-muted);
+}
