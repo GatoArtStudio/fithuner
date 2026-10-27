@@ -9,7 +9,7 @@ A cross-platform file explorer focused on UI and UX, built with Tauri, React and
 - Drag and drop between folders, the sidebar and breadcrumbs, and drop files from other apps to copy them
 - System clipboard integration for files
 - Configurable file preview (planned): images, text/code, PDF, audio, video, Markdown, JSON, CSV, folders
-- Settings screen to enable, disable or tune features (planned)
+- Settings screen (`Ctrl+,`) with theme (system, light, dark), hidden files and trash confirmation; more options arrive with each feature
 - Automatic updates (planned)
 
 ## Requirements
@@ -50,6 +50,7 @@ pnpm tauri dev
 | `Ctrl+Alt+N` | New file |
 | `Menu` / `Shift+F10` / right click | Context menu |
 | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` | Copy / cut / paste files |
+| `Ctrl+,` | Open settings |
 | Drag | Move to the folder under the pointer |
 | `Ctrl` + drag | Copy instead of move |
 | `Esc` while dragging | Cancel the drag |
@@ -58,6 +59,9 @@ pnpm tauri dev
 - Copied files go to the system clipboard, so you can paste them in other file managers. The "cut" state is only known to Fithuner: pasting cut files elsewhere copies them.
 - On Linux the clipboard works on X11 and Wayland. If the system clipboard is unavailable, Fithuner keeps the files in memory so copy and paste still work inside the app.
 - Dragging files out of Fithuner into other apps is not supported yet.
+
+## Settings
+Settings are saved as JSON in your OS config folder (`~/.config/fithuner/settings.json` on Linux, `%APPDATA%\fithuner` on Windows, `~/Library/Application Support/fithuner` on macOS). Missing or invalid values fall back to defaults, so deleting the file is a safe reset.
 
 ## Project structure
 - `src-tauri/src/domains/<scope>/`: Rust backend, hexagonal architecture per business scope

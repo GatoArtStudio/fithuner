@@ -2,16 +2,22 @@ import {
   createDirectoryBrowsingStore,
   tauriDirectoryGateway,
 } from "../directory-browsing";
+import { bindSettings } from "./bind-settings";
 import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
 import { createFileTransferStore, isValidDropTarget, tauriFileTransferGateway } from "../file-transfer";
 import { createNavigationStore, tauriPlacesGateway } from "../navigation";
 import { createDragSessionStore } from "../shared/drag-and-drop/drag-session-store";
 import { findDropTargetAt } from "../shared/drag-and-drop/drop-targets";
+import { createSettingsStore, tauriSettingsGateway } from "../settings";
 import { createToastStore } from "../shared/notifications/toast-store";
 
 export function composeApplication() {
   const toastStore = createToastStore();
+  const settingsStore = createSettingsStore({
+    gateway: tauriSettingsGateway,
+    notifyError: (message) => toastStore.getState().push(message, "error"),
+  });
   const directoryBrowsingStore = createDirectoryBrowsingStore(tauriDirectoryGateway);
   const navigationStore = createNavigationStore({
     placesGateway: tauriPlacesGateway,
@@ -26,6 +32,7 @@ export function composeApplication() {
       selectEntry: (path) => directoryBrowsingStore.getState().selectOnly(path),
     },
     notifyError: (message) => toastStore.getState().push(message, "error"),
+    shouldConfirmTrash: () => settingsStore.getState().settings.browsing.confirmBeforeTrash,
   });
 
   const fileTransferStore = createFileTransferStore({
@@ -59,6 +66,8 @@ export function composeApplication() {
     },
   };
 
+  bindSettings({ settingsStore, directoryBrowsingStore });
+
   async function connectBackendEvents() {
     const unsubscribes = await Promise.all([
       tauriFileTransferGateway.subscribeToTransfers(fileTransferStore.getState().handleEvent),
@@ -69,6 +78,7 @@ export function composeApplication() {
 
   return {
     toastStore,
+    settingsStore,
     directoryBrowsingStore,
     navigationStore,
     fileOperationsStore,

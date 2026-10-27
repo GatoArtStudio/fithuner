@@ -22,6 +22,10 @@ use domains::file_transfer::application::{TransferEntries, TransferEntriesUseCas
 use domains::file_transfer::infrastructure::StdTransferFileSystem;
 use domains::places::application::{ListPlaces, ListPlacesUseCase};
 use domains::places::infrastructure::OsPlacesProvider;
+use domains::settings::application::{
+    LoadSettings, LoadSettingsUseCase, SaveSettings, SaveSettingsUseCase,
+};
+use domains::settings::infrastructure::JsonSettingsRepository;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -58,6 +62,16 @@ pub fn run() {
     let clear_cut_marker: Arc<dyn ClearCutMarkerUseCase> =
         Arc::new(ClearCutMarker::new(cut_marker));
 
+    let settings_path = dirs::config_dir()
+        .unwrap_or_else(std::env::temp_dir)
+        .join("fithuner")
+        .join("settings.json");
+    let settings_repository = Arc::new(JsonSettingsRepository::new(settings_path));
+    let load_settings: Arc<dyn LoadSettingsUseCase> =
+        Arc::new(LoadSettings::new(settings_repository.clone()));
+    let save_settings: Arc<dyn SaveSettingsUseCase> =
+        Arc::new(SaveSettings::new(settings_repository));
+
     ::tauri::Builder::default()
         .manage(list_directory)
         .manage(list_places)
@@ -71,6 +85,8 @@ pub fn run() {
         .manage(place_files_on_clipboard)
         .manage(read_clipboard_files)
         .manage(clear_cut_marker)
+        .manage(load_settings)
+        .manage(save_settings)
         .invoke_handler(::tauri::generate_handler![
             interface::tauri::directory_browsing::commands::list_directory,
             interface::tauri::places::commands::list_places,
@@ -84,7 +100,9 @@ pub fn run() {
             interface::tauri::file_transfer::commands::resolve_conflict,
             interface::tauri::file_clipboard::commands::copy_files_to_clipboard,
             interface::tauri::file_clipboard::commands::read_clipboard_files,
-            interface::tauri::file_clipboard::commands::clear_cut_marker
+            interface::tauri::file_clipboard::commands::clear_cut_marker,
+            interface::tauri::settings::commands::load_settings,
+            interface::tauri::settings::commands::save_settings
         ])
         .run(::tauri::generate_context!())
         .expect("error while running tauri application");

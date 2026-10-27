@@ -29,3 +29,8 @@
   background: var(--color-selection);
   font-weight: 600;
 }
+
+.footer {
+  margin-top: auto;
+  padding-top: var(--space-2);
+}

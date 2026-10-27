@@ -3,7 +3,11 @@ import type { BatchOutcome } from "../../domain/entities/file-operation";
 import type { FileOperationsGateway } from "../ports/file-operations-gateway";
 import { createFileOperationsStore } from "./file-operations-store";
 
-function setup(gatewayOverrides: Partial<FileOperationsGateway> = {}, selected: string[] = []) {
+function setup(
+  gatewayOverrides: Partial<FileOperationsGateway> = {},
+  selected: string[] = [],
+  confirmTrash = false,
+) {
   const gateway: FileOperationsGateway = {
     openEntry: vi.fn().mockResolvedValue(undefined),
     createEntry: vi.fn().mockResolvedValue("/docs/New folder"),
@@ -19,7 +23,12 @@ function setup(gatewayOverrides: Partial<FileOperationsGateway> = {}, selected: 
     selectEntry: vi.fn(),
   };
   const notifyError = vi.fn();
-  const store = createFileOperationsStore({ gateway, directory, notifyError });
+  const store = createFileOperationsStore({
+    gateway,
+    directory,
+    notifyError,
+    shouldConfirmTrash: () => confirmTrash,
+  });
   return { store, gateway, directory, notifyError };
 }
 
@@ -118,11 +127,11 @@ describe("file operations store", () => {
 
     store.getState().requestPermanentDelete();
     expect(gateway.deleteEntriesPermanently).not.toHaveBeenCalled();
-    expect(store.getState().pendingPermanentDeletePaths).toEqual(["/docs/a.txt"]);
+    expect(store.getState().pendingDeletion).toEqual({ paths: ["/docs/a.txt"], mode: "permanent" });
 
-    await store.getState().confirmPermanentDelete();
+    await store.getState().confirmDeletion();
     expect(gateway.deleteEntriesPermanently).toHaveBeenCalledWith(["/docs/a.txt"]);
-    expect(store.getState().pendingPermanentDeletePaths).toBeNull();
+    expect(store.getState().pendingDeletion).toBeNull();
   });
 
   it("does not ask for confirmation when nothing is selected", () => {
@@ -130,6 +139,28 @@ describe("file operations store", () => {
 
     store.getState().requestPermanentDelete();
 
-    expect(store.getState().pendingPermanentDeletePaths).toBeNull();
+    expect(store.getState().pendingDeletion).toBeNull();
+  });
+
+  it("asks for confirmation before trashing when the setting is on", async () => {
+    const { store, gateway } = setup({}, ["/docs/a.txt"], true);
+
+    await store.getState().trashSelected();
+    expect(gateway.trashEntries).not.toHaveBeenCalled();
+    expect(store.getState().pendingDeletion).toEqual({ paths: ["/docs/a.txt"], mode: "trash" });
+
+    await store.getState().confirmDeletion();
+    expect(gateway.trashEntries).toHaveBeenCalledWith(["/docs/a.txt"]);
+    expect(gateway.deleteEntriesPermanently).not.toHaveBeenCalled();
+  });
+
+  it("does not delete anything when the confirmation is cancelled", async () => {
+    const { store, gateway } = setup({}, ["/docs/a.txt"], true);
+    await store.getState().trashSelected();
+
+    store.getState().cancelDeletion();
+
+    expect(store.getState().pendingDeletion).toBeNull();
+    expect(gateway.trashEntries).not.toHaveBeenCalled();
   });
 });

@@ -5,16 +5,16 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
 }
 
-export function useFileOperationShortcuts() {
+export function useFileOperationShortcuts(isBlocked = false) {
   const createEntry = useFileOperations((state) => state.createEntry);
   const startRename = useFileOperations((state) => state.startRename);
   const trashSelected = useFileOperations((state) => state.trashSelected);
   const requestPermanentDelete = useFileOperations((state) => state.requestPermanentDelete);
-  const isDialogOpen = useFileOperations((state) => state.pendingPermanentDeletePaths !== null);
+  const isDialogOpen = useFileOperations((state) => state.pendingDeletion !== null);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (isTypingTarget(event.target) || isDialogOpen) return;
+      if (isBlocked || isTypingTarget(event.target) || isDialogOpen) return;
 
       const key = event.key.toLowerCase();
       if (event.key === "F2") startRename();
@@ -28,5 +28,5 @@ export function useFileOperationShortcuts() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [createEntry, startRename, trashSelected, requestPermanentDelete, isDialogOpen]);
+  }, [createEntry, startRename, trashSelected, requestPermanentDelete, isDialogOpen, isBlocked]);
 }
