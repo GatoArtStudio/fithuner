@@ -5,7 +5,11 @@ import type { PreviewStore } from "../file-preview";
 import { selectCanGoBack, selectCanGoForward, type PlacesStore } from "../navigation";
 import type { SettingsStore } from "../settings";
 import type { UpdatesStore } from "../app-updates";
+import type { FileTransferStore } from "../file-transfer";
+import type { WorkspaceStore } from "../workspace";
 import type { BrowsingSession } from "./browsing-session";
+import { command } from "./palette-command";
+import { buildWorkspaceCommands } from "./palette-workspace-commands";
 
 export type PaletteSession = Pick<BrowsingSession, "directoryBrowsingStore" | "navigationStore" | "searchStore">;
 
@@ -17,20 +21,11 @@ export interface PaletteStores {
   settingsStore: SettingsStore;
   previewStore: PreviewStore;
   updatesStore: UpdatesStore;
+  workspaceStore: WorkspaceStore<BrowsingSession>;
+  fileTransferStore: FileTransferStore;
 }
 
 const RECENT_FOLDERS_LIMIT = 10;
-
-interface CommandOptions {
-  shortcut?: string;
-  keywords?: string[];
-  isAvailable?: boolean;
-}
-
-function command(id: string, title: string, run: () => void, options: CommandOptions = {}): PaletteItem | null {
-  if (options.isAvailable === false) return null;
-  return { id: `command:${id}`, title, group: "commands", run, shortcut: options.shortcut, keywords: options.keywords };
-}
 
 function buildCommands(stores: PaletteStores): PaletteItem[] {
   const session = stores.activeSession();
@@ -135,7 +130,7 @@ function buildCommands(stores: PaletteStores): PaletteItem[] {
     ),
   ];
 
-  return commands.filter((item): item is PaletteItem => item !== null);
+  return [...commands, ...buildWorkspaceCommands(stores)].filter((item): item is PaletteItem => item !== null);
 }
 
 function buildPlaces(stores: PaletteStores): PaletteItem[] {
