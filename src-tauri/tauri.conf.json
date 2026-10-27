@@ -39,6 +39,15 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFGQzAxMzhBRjFCRTU3NUQKUldSZFY3N3hpaFBBSCtxc05OeXg2S1NkeVE5cVIyelVrSzJlLzFSWW1zdEZnbWVGR3IySVlTamoK",
+      "endpoints": [
+        "https://github.com/GatoArtStudio/fithuner/releases/latest/download/latest.json"
+      ]
+    }
   }
 }
