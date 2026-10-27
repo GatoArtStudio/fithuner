@@ -14,10 +14,15 @@ export interface ContextMenuRequest {
   y: number;
 }
 
+export interface PendingDeletion {
+  paths: string[];
+  mode: "trash" | "permanent";
+}
+
 export interface FileOperationsState {
   renamingPath: string | null;
   renameError: string | null;
-  pendingPermanentDeletePaths: string[] | null;
+  pendingDeletion: PendingDeletion | null;
   contextMenu: ContextMenuRequest | null;
   openEntry: (path: string) => Promise<void>;
   createEntry: (kind: NewEntryKind) => Promise<void>;
@@ -26,8 +31,8 @@ export interface FileOperationsState {
   commitRename: (newName: string) => Promise<void>;
   trashSelected: () => Promise<void>;
   requestPermanentDelete: () => void;
-  confirmPermanentDelete: () => Promise<void>;
-  cancelPermanentDelete: () => void;
+  confirmDeletion: () => Promise<void>;
+  cancelDeletion: () => void;
   openContextMenu: (request: ContextMenuRequest) => void;
   closeContextMenu: () => void;
 }
@@ -43,6 +48,7 @@ export interface FileOperationsDependencies {
     selectEntry: (path: string) => void;
   };
   notifyError: (message: string) => void;
+  shouldConfirmTrash?: () => boolean;
 }
 
 function toFileOperationError(failure: unknown): FileOperationError {
@@ -56,6 +62,7 @@ export function createFileOperationsStore({
   gateway,
   directory,
   notifyError,
+  shouldConfirmTrash = () => false,
 }: FileOperationsDependencies): FileOperationsStore {
   function reportFailures(action: string, outcome: BatchOutcome) {
     const [firstFailure] = outcome.failed;
@@ -81,7 +88,7 @@ export function createFileOperationsStore({
   return createStore<FileOperationsState>((set, get) => ({
     renamingPath: null,
     renameError: null,
-    pendingPermanentDeletePaths: null,
+    pendingDeletion: null,
     contextMenu: null,
 
     openEntry: async (path) => {
@@ -145,21 +152,30 @@ export function createFileOperationsStore({
     trashSelected: async () => {
       const paths = directory.selectedPaths();
       if (paths.length === 0) return;
+      if (shouldConfirmTrash()) {
+        set({ pendingDeletion: { paths, mode: "trash" } });
+        return;
+      }
       await removeEntries("move to trash", paths, gateway.trashEntries);
     },
 
     requestPermanentDelete: () => {
       const paths = directory.selectedPaths();
-      if (paths.length > 0) set({ pendingPermanentDeletePaths: paths });
+      if (paths.length > 0) set({ pendingDeletion: { paths, mode: "permanent" } });
     },
 
-    confirmPermanentDelete: async () => {
-      const paths = get().pendingPermanentDeletePaths;
-      set({ pendingPermanentDeletePaths: null });
-      if (paths) await removeEntries("delete", paths, gateway.deleteEntriesPermanently);
+    confirmDeletion: async () => {
+      const pending = get().pendingDeletion;
+      set({ pendingDeletion: null });
+      if (!pending) return;
+      if (pending.mode === "trash") {
+        await removeEntries("move to trash", pending.paths, gateway.trashEntries);
+      } else {
+        await removeEntries("delete", pending.paths, gateway.deleteEntriesPermanently);
+      }
     },
 
-    cancelPermanentDelete: () => set({ pendingPermanentDeletePaths: null }),
+    cancelDeletion: () => set({ pendingDeletion: null }),
 
     openContextMenu: (request) => set({ contextMenu: request }),
     closeContextMenu: () => set({ contextMenu: null }),

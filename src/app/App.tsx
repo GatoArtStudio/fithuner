@@ -16,7 +16,7 @@ import {
   EntryContextMenu,
   FileOperationsProvider,
   InlineRenameInput,
-  PermanentDeleteDialog,
+  DeleteConfirmationDialog,
   useFileOperationShortcuts,
   useFileOperations,
 } from "../file-operations";
@@ -60,7 +60,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   const openEntry = useFileOperations((state) => state.openEntry);
   const openContextMenu = useFileOperations((state) => state.openContextMenu);
   const cutPaths = useFileClipboard((state) => state.cutPaths);
-  const isDialogOpen = useFileOperations((state) => state.pendingPermanentDeletePaths !== null);
+  const isDialogOpen = useFileOperations((state) => state.pendingDeletion !== null);
   const renderClipboardMenuItems = useClipboardMenuItems();
   const loadSettings = useSettings((state) => state.load);
   const isSettingsOpen = useSettings((state) => state.isOpen);
@@ -129,7 +129,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       </div>
       {isSettingsOpen && <SettingsView />}
       <EntryContextMenu renderExtraItems={renderClipboardMenuItems} />
-      <PermanentDeleteDialog />
+      <DeleteConfirmationDialog />
       <ConflictDialog />
       <TransferPanel />
       <ExternalDropOverlay />

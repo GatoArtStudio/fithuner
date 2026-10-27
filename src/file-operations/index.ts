@@ -3,7 +3,7 @@ export type { FileOperationsStore } from "./application/stores/file-operations-s
 export { tauriFileOperationsGateway } from "./infrastructure/gateways/tauri/tauri-file-operations-gateway";
 export { EntryContextMenu } from "./presentation/components/EntryContextMenu";
 export { InlineRenameInput } from "./presentation/components/InlineRenameInput";
-export { PermanentDeleteDialog } from "./presentation/components/PermanentDeleteDialog";
+export { DeleteConfirmationDialog } from "./presentation/components/DeleteConfirmationDialog";
 export {
   FileOperationsProvider,
   useFileOperations,

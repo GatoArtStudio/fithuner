@@ -10,7 +10,7 @@ export function useFileOperationShortcuts(isBlocked = false) {
   const startRename = useFileOperations((state) => state.startRename);
   const trashSelected = useFileOperations((state) => state.trashSelected);
   const requestPermanentDelete = useFileOperations((state) => state.requestPermanentDelete);
-  const isDialogOpen = useFileOperations((state) => state.pendingPermanentDeletePaths !== null);
+  const isDialogOpen = useFileOperations((state) => state.pendingDeletion !== null);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
