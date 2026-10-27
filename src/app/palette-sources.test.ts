@@ -5,7 +5,7 @@ import { createFileClipboardStore } from "../file-clipboard";
 import { createFileOperationsStore } from "../file-operations";
 import { createPreviewStore } from "../file-preview";
 import { createSearchStore } from "../folder-search";
-import { createNavigationStore } from "../navigation";
+import { createNavigationStore, createPlacesStore } from "../navigation";
 import { createSettingsStore } from "../settings";
 import { buildPaletteItems, type PaletteStores } from "./palette-sources";
 
@@ -17,13 +17,15 @@ async function createStores() {
       entries: [],
     })),
   });
-  const navigationStore = createNavigationStore({
+  const placesStore = createPlacesStore({
     placesGateway: {
       listPlaces: async () => [
         { label: "Home", path: "/home/ana", kind: "home" },
         { label: "Documents", path: "/home/ana/Documents", kind: "documents" },
       ],
     },
+  });
+  const navigationStore = createNavigationStore({
     openDirectory: directoryBrowsingStore.getState().openDirectory,
   });
   const directory = {
@@ -35,6 +37,7 @@ async function createStores() {
   const stores: PaletteStores = {
     directoryBrowsingStore,
     navigationStore,
+    placesStore,
     fileOperationsStore: createFileOperationsStore({
       gateway: {
         openEntry: vi.fn(),
@@ -73,7 +76,7 @@ async function createStores() {
       currentDirectoryPath: () => directoryBrowsingStore.getState().listing?.path ?? null,
     }),
   };
-  await navigationStore.getState().loadPlaces();
+  await placesStore.getState().load();
   await navigationStore.getState().navigateTo("/home/ana");
   return stores;
 }

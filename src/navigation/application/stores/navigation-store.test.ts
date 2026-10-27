@@ -4,7 +4,6 @@ import { createNavigationStore } from "./navigation-store";
 
 function createStoreWith(openDirectory: (path?: string) => Promise<string | null>) {
   return createNavigationStore({
-    placesGateway: { listPlaces: vi.fn().mockResolvedValue([]) },
     openDirectory,
   });
 }
@@ -55,16 +54,5 @@ describe("navigation store", () => {
     await store.getState().goBack();
 
     expect(currentPath(store.getState().history)).toBe("/b");
-  });
-
-  it("loads the places and falls back to an empty list on failure", async () => {
-    const store = createNavigationStore({
-      placesGateway: { listPlaces: vi.fn().mockRejectedValue(new Error("boom")) },
-      openDirectory: echoOpen,
-    });
-
-    await store.getState().loadPlaces();
-
-    expect(store.getState().places).toEqual([]);
   });
 });

@@ -11,7 +11,7 @@ import { createSearchStore, tauriSearchGateway } from "../folder-search";
 import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
 import { createFileTransferStore, isValidDropTarget, tauriFileTransferGateway } from "../file-transfer";
-import { createNavigationStore, tauriPlacesGateway } from "../navigation";
+import { createNavigationStore, createPlacesStore, tauriPlacesGateway } from "../navigation";
 import { createDragSessionStore } from "../shared/drag-and-drop/drag-session-store";
 import { findDropTargetAt } from "../shared/drag-and-drop/drop-targets";
 import { createPreviewStore, tauriPreviewGateway } from "../file-preview";
@@ -25,8 +25,8 @@ export function composeApplication() {
     notifyError: (message) => toastStore.getState().push(message, "error"),
   });
   const directoryBrowsingStore = createDirectoryBrowsingStore(tauriDirectoryGateway);
+  const placesStore = createPlacesStore({ placesGateway: tauriPlacesGateway });
   const navigationStore = createNavigationStore({
-    placesGateway: tauriPlacesGateway,
     openDirectory: directoryBrowsingStore.getState().openDirectory,
   });
   const fileOperationsStore = createFileOperationsStore({
@@ -103,6 +103,7 @@ export function composeApplication() {
   const paletteStores = {
     directoryBrowsingStore,
     navigationStore,
+    placesStore,
     fileOperationsStore,
     fileClipboardStore,
     settingsStore,
@@ -124,6 +125,7 @@ export function composeApplication() {
     settingsStore,
     directoryBrowsingStore,
     navigationStore,
+    placesStore,
     fileOperationsStore,
     fileTransferStore,
     fileClipboardStore,

@@ -4,13 +4,14 @@ import type { FileClipboardStore } from "../file-clipboard";
 import { fileNameOf, type FileOperationsStore } from "../file-operations";
 import type { PreviewStore } from "../file-preview";
 import type { SearchStore } from "../folder-search";
-import { selectCanGoBack, selectCanGoForward, type NavigationStore } from "../navigation";
+import { selectCanGoBack, selectCanGoForward, type NavigationStore, type PlacesStore } from "../navigation";
 import type { SettingsStore } from "../settings";
 import type { UpdatesStore } from "../app-updates";
 
 export interface PaletteStores {
   directoryBrowsingStore: DirectoryBrowsingStore;
   navigationStore: NavigationStore;
+  placesStore: PlacesStore;
   fileOperationsStore: FileOperationsStore;
   fileClipboardStore: FileClipboardStore;
   settingsStore: SettingsStore;
@@ -138,7 +139,8 @@ function buildCommands(stores: PaletteStores): PaletteItem[] {
 }
 
 function buildPlaces(stores: PaletteStores): PaletteItem[] {
-  const { places, history } = stores.navigationStore.getState();
+  const { history } = stores.navigationStore.getState();
+  const { places } = stores.placesStore.getState();
   const navigateTo = (path: string) => () => void stores.navigationStore.getState().navigateTo(path);
   const currentPath = stores.directoryBrowsingStore.getState().listing?.path;
 
@@ -172,7 +174,7 @@ function buildTypedTextItems(stores: PaletteStores, query: string): PaletteItem[
   if (text === "") return [];
 
   if (isPathLike(text)) {
-    const homePath = stores.navigationStore.getState().places.find((place) => place.kind === "home")?.path ?? null;
+    const homePath = stores.placesStore.getState().places.find((place) => place.kind === "home")?.path ?? null;
     const path = expandHome(text, homePath);
     return [
       {

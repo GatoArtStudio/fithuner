@@ -62,8 +62,10 @@ import {
   Breadcrumbs,
   NavigationControls,
   NavigationProvider,
+  PlacesProvider,
   Sidebar,
   useNavigation,
+  usePlaces,
   useNavigationShortcuts,
 } from "../navigation";
 import {
@@ -86,7 +88,7 @@ interface ExplorerProps {
 }
 
 function Explorer({ connectBackendEvents }: ExplorerProps) {
-  const loadPlaces = useNavigation((state) => state.loadPlaces);
+  const loadPlaces = usePlaces((state) => state.load);
   const navigateTo = useNavigation((state) => state.navigateTo);
   const renamingPath = useFileOperations((state) => state.renamingPath);
   const openEntry = useFileOperations((state) => state.openEntry);
@@ -279,6 +281,7 @@ export function App() {
       <UpdatesProvider store={application.updatesStore}>
       <PreviewProvider store={application.previewStore} gateway={application.previewGateway}>
       <DirectoryBrowsingProvider store={application.directoryBrowsingStore}>
+        <PlacesProvider store={application.placesStore}>
         <NavigationProvider store={application.navigationStore}>
           <FileOperationsProvider store={application.fileOperationsStore}>
             <FileTransferProvider store={application.fileTransferStore}>
@@ -290,6 +293,7 @@ export function App() {
             </FileTransferProvider>
           </FileOperationsProvider>
         </NavigationProvider>
+        </PlacesProvider>
       </DirectoryBrowsingProvider>
       </PreviewProvider>
       </UpdatesProvider>
