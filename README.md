@@ -4,6 +4,7 @@ A cross-platform file explorer focused on UI and UX, built with Tauri, React and
 
 ## Highlights
 - Fast, virtualized folder browsing with sidebar places, breadcrumbs and back/forward history
+- Open, create, rename and trash files and folders, with a context menu and inline rename
 - Configurable file preview (planned): images, text/code, PDF, audio, video, Markdown, JSON, CSV, folders
 - Settings screen to enable, disable or tune features (planned)
 - Automatic updates (planned)
@@ -39,6 +40,12 @@ pnpm tauri dev
 | `↑` `↓` `Home` `End` | Move selection |
 | `Enter` | Open selected folder |
 | `Esc` | Clear selection |
+| `F2` | Rename selected entry |
+| `Delete` | Move selection to trash |
+| `Shift+Delete` | Delete selection permanently (asks first) |
+| `Ctrl+Shift+N` | New folder |
+| `Ctrl+Alt+N` | New file |
+| `Menu` / `Shift+F10` / right click | Context menu |
 
 ## Project structure
 - `src-tauri/src/domains/<scope>/`: Rust backend, hexagonal architecture per business scope
