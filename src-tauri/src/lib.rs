@@ -33,6 +33,9 @@ use domains::settings::infrastructure::JsonSettingsRepository;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let _ = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn"))
+        .try_init();
+
     let entry_writer = Arc::new(StdEntryWriter);
 
     let list_directory: Arc<dyn ListDirectoryUseCase> =

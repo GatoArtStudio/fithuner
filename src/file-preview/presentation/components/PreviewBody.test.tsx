@@ -23,6 +23,7 @@ describe("PreviewBody", () => {
   });
 
   it("offers the default app when an image cannot be displayed", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403 }));
     const onOpenExternally = vi.fn();
     await renderWithPreview(body(target("broken.png"), onOpenExternally));
 
@@ -30,7 +31,9 @@ describe("PreviewBody", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open with default app" }));
 
     expect(screen.getByText("This image could not be displayed")).toBeTruthy();
+    expect(await screen.findByText("Fithuner is not allowed to read this file (HTTP 403)")).toBeTruthy();
     expect(onOpenExternally).toHaveBeenCalledWith("/files/broken.png");
+    vi.unstubAllGlobals();
   });
 
   it("explains that a provider is turned off", async () => {
