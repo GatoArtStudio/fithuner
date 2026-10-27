@@ -77,6 +77,10 @@
   opacity: 0.55;
 }
 
+.dimmed {
+  opacity: 0.45;
+}
+
 .nameCell {
   display: flex;
   align-items: center;

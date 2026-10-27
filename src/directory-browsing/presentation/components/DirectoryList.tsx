@@ -36,9 +36,15 @@ interface DirectoryListProps {
   onOpenEntry: (entry: FileEntry) => void;
   onContextMenu: (entry: FileEntry | null, position: ContextMenuPosition) => void;
   renderNameEditor?: (entry: FileEntry) => ReactNode;
+  isEntryDimmed?: (entry: FileEntry) => boolean;
 }
 
-export function DirectoryList({ onOpenEntry, onContextMenu, renderNameEditor }: DirectoryListProps) {
+export function DirectoryList({
+  onOpenEntry,
+  onContextMenu,
+  renderNameEditor,
+  isEntryDimmed,
+}: DirectoryListProps) {
   const listing = useDirectoryBrowsing((state) => state.listing);
   const error = useDirectoryBrowsing((state) => state.error);
   const sort = useDirectoryBrowsing((state) => state.sort);
@@ -194,7 +200,7 @@ export function DirectoryList({ onOpenEntry, onContextMenu, renderNameEditor }: 
                 aria-selected={isSelected}
                 className={`${styles.row} ${isSelected ? styles.selected : ""} ${
                   entry.isHidden ? styles.hidden : ""
-                }`}
+                } ${isEntryDimmed?.(entry) ? styles.dimmed : ""}`}
                 style={{ height: ROW_HEIGHT, transform: `translateY(${virtualRow.start}px)` }}
                 onClick={(event) => handleRowClick(event, entry)}
                 onContextMenu={(event) => handleRowContextMenu(event, entry)}

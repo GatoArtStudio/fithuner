@@ -2,6 +2,7 @@ import {
   createDirectoryBrowsingStore,
   tauriDirectoryGateway,
 } from "../directory-browsing";
+import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
 import { createFileTransferStore, tauriFileTransferGateway } from "../file-transfer";
 import { createNavigationStore, tauriPlacesGateway } from "../navigation";
@@ -31,6 +32,16 @@ export function composeApplication() {
     notify: (message, tone) => toastStore.getState().push(message, tone),
   });
 
+  const fileClipboardStore = createFileClipboardStore({
+    gateway: tauriFileClipboardGateway,
+    directory: {
+      selectedPaths: () => directoryBrowsingStore.getState().selectedPaths,
+      currentDirectoryPath: () => directoryBrowsingStore.getState().listing?.path ?? null,
+    },
+    startTransfer: (request) => fileTransferStore.getState().startTransfer(request),
+    notifyError: (message) => toastStore.getState().push(message, "error"),
+  });
+
   function connectBackendEvents() {
     return tauriFileTransferGateway.subscribeToTransfers(fileTransferStore.getState().handleEvent);
   }
@@ -41,6 +52,7 @@ export function composeApplication() {
     navigationStore,
     fileOperationsStore,
     fileTransferStore,
+    fileClipboardStore,
     connectBackendEvents,
   };
 }

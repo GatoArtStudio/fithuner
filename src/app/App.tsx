@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 import {
+  FileClipboardProvider,
+  useClipboardMenuItems,
+  useClipboardShortcuts,
+  useFileClipboard,
+} from "../file-clipboard";
+import {
   DirectoryBrowsingProvider,
   DirectoryList,
   FolderStatusBar,
@@ -38,8 +44,12 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   const renamingPath = useFileOperations((state) => state.renamingPath);
   const openEntry = useFileOperations((state) => state.openEntry);
   const openContextMenu = useFileOperations((state) => state.openContextMenu);
+  const cutPaths = useFileClipboard((state) => state.cutPaths);
+  const isDialogOpen = useFileOperations((state) => state.pendingPermanentDeletePaths !== null);
+  const renderClipboardMenuItems = useClipboardMenuItems();
   useNavigationShortcuts();
   useFileOperationShortcuts();
+  useClipboardShortcuts(isDialogOpen || renamingPath !== null);
 
   useEffect(() => {
     let isDisposed = false;
@@ -82,6 +92,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
                 ...position,
               })
             }
+            isEntryDimmed={(entry) => cutPaths.includes(entry.path)}
             renderNameEditor={(entry) =>
               entry.path === renamingPath ? (
                 <InlineRenameInput initialName={entry.name} isDirectory={entry.kind === "directory"} />
@@ -91,7 +102,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
         </div>
         <FolderStatusBar />
       </main>
-      <EntryContextMenu />
+      <EntryContextMenu renderExtraItems={renderClipboardMenuItems} />
       <PermanentDeleteDialog />
       <ConflictDialog />
       <TransferPanel />
@@ -109,7 +120,9 @@ export function App() {
         <NavigationProvider store={application.navigationStore}>
           <FileOperationsProvider store={application.fileOperationsStore}>
             <FileTransferProvider store={application.fileTransferStore}>
-              <Explorer connectBackendEvents={application.connectBackendEvents} />
+              <FileClipboardProvider store={application.fileClipboardStore}>
+                <Explorer connectBackendEvents={application.connectBackendEvents} />
+              </FileClipboardProvider>
             </FileTransferProvider>
           </FileOperationsProvider>
         </NavigationProvider>
