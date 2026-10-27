@@ -6,7 +6,7 @@ import { createCommandPaletteStore } from "../command-palette";
 import { tauriSearchGateway } from "../folder-search";
 import { createFileClipboardStore, tauriFileClipboardGateway } from "../file-clipboard";
 import { createFileOperationsStore, tauriFileOperationsGateway } from "../file-operations";
-import { createFileTransferStore, isValidDropTarget, tauriFileTransferGateway } from "../file-transfer";
+import { createFileTransferStore, isMoveWithinSameFolder, isValidDropTarget, tauriFileTransferGateway } from "../file-transfer";
 import { createPlacesStore, tauriPlacesGateway } from "../navigation";
 import { createDragSessionStore } from "../shared/drag-and-drop/drag-session-store";
 import { findDropTargetAt } from "../shared/drag-and-drop/drop-targets";
@@ -73,6 +73,7 @@ export function composeApplication() {
     store: dragSessionStore,
     canDrop: isValidDropTarget,
     onDrop: ({ paths, targetPath, isCopy }: { paths: string[]; targetPath: string; isCopy: boolean }) => {
+      if (!isCopy && isMoveWithinSameFolder(paths, targetPath)) return;
       void fileTransferStore.getState().startTransfer({
         sources: paths,
         destinationDirectory: targetPath,

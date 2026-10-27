@@ -10,3 +10,5 @@ export type {
 export { TabBar } from "./presentation/components/TabBar";
 export { WorkspaceProvider, useWorkspace } from "./presentation/context/WorkspaceContext";
 export { useWorkspaceShortcuts } from "./presentation/hooks/useWorkspaceShortcuts";
+export { SplitDivider } from "./presentation/components/SplitDivider";
+export { SplitToggleButton } from "./presentation/components/SplitToggleButton";

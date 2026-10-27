@@ -6,6 +6,8 @@ export function useWorkspaceShortcuts(isBlocked = false) {
   const closeTab = useWorkspace((state) => state.closeTab);
   const cycleTab = useWorkspace((state) => state.cycleTab);
   const activateTabAtPosition = useWorkspace((state) => state.activateTabAtPosition);
+  const toggleSplit = useWorkspace((state) => state.toggleSplit);
+  const switchPane = useWorkspace((state) => state.switchPane);
   const activeTabId = useWorkspace((state) => {
     const pane = state.workspace.panes.find((candidate) => candidate.id === state.workspace.activePaneId);
     return pane?.activeTabId;
@@ -13,10 +15,13 @@ export function useWorkspaceShortcuts(isBlocked = false) {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (isBlocked || event.altKey || !(event.ctrlKey || event.metaKey)) return;
+      if (isBlocked || event.altKey) return;
       const key = event.key.toLowerCase();
 
-      if (!event.shiftKey && key === "t") newTab();
+      if (event.key === "F6" && !event.ctrlKey && !event.metaKey && !event.shiftKey) switchPane();
+      else if (!(event.ctrlKey || event.metaKey)) return;
+      else if (!event.shiftKey && key === "\\") toggleSplit();
+      else if (!event.shiftKey && key === "t") newTab();
       else if (!event.shiftKey && key === "w" && activeTabId) closeTab(activeTabId);
       else if (key === "tab") cycleTab(event.shiftKey ? -1 : 1);
       else if (!event.shiftKey && key === "pagedown") cycleTab(1);
@@ -28,5 +33,5 @@ export function useWorkspaceShortcuts(isBlocked = false) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isBlocked, newTab, closeTab, cycleTab, activateTabAtPosition, activeTabId]);
+  }, [isBlocked, newTab, closeTab, cycleTab, activateTabAtPosition, toggleSplit, switchPane, activeTabId]);
 }

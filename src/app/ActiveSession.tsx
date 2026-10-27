@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
 import { useStore } from "zustand";
-import { DirectoryBrowsingProvider } from "../directory-browsing";
-import { SearchProvider } from "../folder-search";
-import { NavigationProvider } from "../navigation";
 import { selectActiveSession, type WorkspaceStore } from "../workspace";
 import type { BrowsingSession } from "./browsing-session";
+import { SessionProviders } from "./SessionProviders";
 
 interface ActiveSessionProps {
   workspaceStore: WorkspaceStore<BrowsingSession>;
@@ -14,11 +12,5 @@ interface ActiveSessionProps {
 export function ActiveSession({ workspaceStore, children }: ActiveSessionProps) {
   const session = useStore(workspaceStore, selectActiveSession);
 
-  return (
-    <DirectoryBrowsingProvider store={session.directoryBrowsingStore}>
-      <NavigationProvider store={session.navigationStore}>
-        <SearchProvider store={session.searchStore}>{children}</SearchProvider>
-      </NavigationProvider>
-    </DirectoryBrowsingProvider>
-  );
+  return <SessionProviders session={session}>{children}</SessionProviders>;
 }

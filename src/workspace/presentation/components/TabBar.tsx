@@ -8,10 +8,11 @@ import styles from "./TabBar.module.css";
 interface TabBarProps {
   paneId: string;
   renderTitle: (tab: Tab) => ReactNode;
+  isActivePane?: boolean;
   trailing?: ReactNode;
 }
 
-export function TabBar({ paneId, renderTitle, trailing }: TabBarProps) {
+export function TabBar({ paneId, renderTitle, isActivePane = true, trailing }: TabBarProps) {
   const pane = useWorkspace((state) => findPane(state.workspace, paneId));
   const isSplit = useWorkspace((state) => state.workspace.panes.length > 1);
   const activateTab = useWorkspace((state) => state.activateTab);
@@ -28,7 +29,7 @@ export function TabBar({ paneId, renderTitle, trailing }: TabBarProps) {
   }
 
   return (
-    <div className={styles.bar}>
+    <div className={styles.bar} data-pane-active={isActivePane}>
       <div className={styles.tabs} role="tablist" aria-label="Tabs">
         {pane.tabs.map((tab) => (
           <div

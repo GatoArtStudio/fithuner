@@ -2,6 +2,7 @@ export { createFileTransferStore } from "./application/stores/file-transfer-stor
 export type { FileTransferStore, FinishedTransfer } from "./application/stores/file-transfer-store";
 export type { FileTransferGateway } from "./application/ports/file-transfer-gateway";
 export type { TransferMode, TransferRequest } from "./domain/entities/transfer";
+export { isMoveWithinSameFolder } from "./domain/services/is-move-within-same-folder";
 export { isValidDropTarget } from "./domain/services/is-valid-drop-target";
 export { tauriFileTransferGateway } from "./infrastructure/gateways/tauri/tauri-file-transfer-gateway";
 export { ConflictDialog } from "./presentation/components/ConflictDialog";
