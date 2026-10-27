@@ -14,5 +14,6 @@ export type {
   BatchOutcome,
   EntryMove,
   EntryReference,
+  FileOperationEvent,
 } from "./domain/entities/file-operation";
 export type { FileOperationsGateway } from "./application/ports/file-operations-gateway";

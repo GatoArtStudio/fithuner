@@ -28,6 +28,11 @@ export interface EntryMove {
   to: string;
 }
 
+export type FileOperationEvent =
+  | { type: "renamed"; from: string; to: string }
+  | { type: "created"; path: string }
+  | { type: "trashed"; paths: string[] };
+
 export interface EntryReference {
   path: string;
   kind: "file" | "directory";

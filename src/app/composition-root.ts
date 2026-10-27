@@ -1,4 +1,5 @@
 import { tauriDirectoryGateway } from "../directory-browsing";
+import { undoActionFromOperation, undoActionFromTransfer } from "./undo-actions";
 import { bindFolderWatching } from "./bind-folder-watching";
 import { startWorkspacePersistence } from "./bind-workspace-persistence";
 import { buildPaletteItems } from "./palette-sources";
@@ -15,6 +16,7 @@ import { createDragSessionStore } from "../shared/drag-and-drop/drag-session-sto
 import { findDropTargetAt } from "../shared/drag-and-drop/drop-targets";
 import { createPreviewStore, tauriPreviewGateway } from "../file-preview";
 import { createSettingsStore, tauriSettingsGateway } from "../settings";
+import { createUndoStore } from "../undo-history";
 import { createToastStore } from "../shared/notifications/toast-store";
 import {
   createLocalStorageWorkspaceLayoutGateway,
@@ -50,8 +52,17 @@ export function composeApplication() {
     const sessions = Object.values(workspaceStore.getState().sessions);
     await Promise.all(sessions.map((session) => session.directoryBrowsingStore.getState().refresh()));
   };
+  const undoStore = createUndoStore({
+    gateway: tauriFileOperationsGateway,
+    afterChange: async () => {
+      const sessions = Object.values(workspaceStore.getState().sessions);
+      await Promise.all(sessions.map((session) => session.directoryBrowsingStore.getState().reload()));
+    },
+    notify: (message, tone) => toastStore.getState().push(message, tone),
+  });
   const fileOperationsStore = createFileOperationsStore({
     gateway: tauriFileOperationsGateway,
+    onCompleted: (event) => undoStore.getState().record(undoActionFromOperation(event)),
     directory: {
       currentDirectoryPath: () => activeDirectory().listing?.path ?? null,
       selectedPaths: () => activeDirectory().selectedPaths,
@@ -68,6 +79,10 @@ export function composeApplication() {
     resolveDropTargetAt: findDropTargetAt,
     currentDirectoryPath: () => activeDirectory().listing?.path ?? null,
     notify: (message, tone) => toastStore.getState().push(message, tone),
+    onTransferFinished: (finished) => {
+      const action = undoActionFromTransfer(finished);
+      if (action) undoStore.getState().record(action);
+    },
   });
 
   const fileClipboardStore = createFileClipboardStore({
@@ -140,6 +155,7 @@ export function composeApplication() {
     previewStore,
     updatesStore,
     workspaceStore,
+    undoStore,
     commandPaletteStore,
     previewGateway: tauriPreviewGateway,
     settingsStore,

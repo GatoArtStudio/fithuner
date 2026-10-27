@@ -7,6 +7,7 @@ function setup(
   gatewayOverrides: Partial<FileOperationsGateway> = {},
   selected: string[] = [],
   confirmTrash = false,
+  onCompleted = vi.fn(),
 ) {
   const gateway: FileOperationsGateway = {
     openEntry: vi.fn().mockResolvedValue(undefined),
@@ -30,8 +31,9 @@ function setup(
     directory,
     notifyError,
     shouldConfirmTrash: () => confirmTrash,
+    onCompleted,
   });
-  return { store, gateway, directory, notifyError };
+  return { store, gateway, directory, notifyError, onCompleted };
 }
 
 describe("file operations store", () => {
@@ -164,5 +166,66 @@ describe("file operations store", () => {
 
     expect(store.getState().pendingDeletion).toBeNull();
     expect(gateway.trashEntries).not.toHaveBeenCalled();
+  });
+
+  describe("completed operations", () => {
+    it("reports a created entry", async () => {
+      const { store, onCompleted } = setup();
+
+      await store.getState().createEntry("directory");
+
+      expect(onCompleted).toHaveBeenCalledWith({ type: "created", path: "/docs/New folder" });
+    });
+
+    it("reports a rename with the old and the new path", async () => {
+      const { store, onCompleted } = setup();
+      store.getState().startRename("/docs/a.txt");
+
+      await store.getState().commitRename("renamed.txt");
+
+      expect(onCompleted).toHaveBeenCalledWith({ type: "renamed", from: "/docs/a.txt", to: "/docs/renamed.txt" });
+    });
+
+    it("does not report a rename that failed or changed nothing", async () => {
+      const { store, onCompleted } = setup({
+        renameEntry: vi.fn().mockRejectedValue({ kind: "alreadyExists", message: "Already exists" }),
+      });
+      store.getState().startRename("/docs/a.txt");
+
+      await store.getState().commitRename("b.txt");
+      await store.getState().commitRename("a.txt");
+
+      expect(onCompleted).not.toHaveBeenCalled();
+    });
+
+    it("reports only the entries that really went to the trash", async () => {
+      const { store, onCompleted } = setup(
+        {
+          trashEntries: vi.fn().mockResolvedValue({
+            succeeded: ["/docs/a.txt"],
+            failed: [{ path: "/docs/b.txt", error: { kind: "permissionDenied", message: "Permission denied" } }],
+          }),
+        },
+        ["/docs/a.txt", "/docs/b.txt"],
+      );
+
+      await store.getState().trashSelected();
+
+      expect(onCompleted).toHaveBeenCalledWith({ type: "trashed", paths: ["/docs/a.txt"] });
+    });
+
+    it("reports a confirmed trash but never a permanent deletion", async () => {
+      const { store, onCompleted } = setup({}, ["/docs/a.txt"], true);
+
+      await store.getState().trashSelected();
+      expect(onCompleted).not.toHaveBeenCalled();
+      await store.getState().confirmDeletion();
+      expect(onCompleted).toHaveBeenCalledWith({ type: "trashed", paths: ["/docs/a.txt"] });
+
+      onCompleted.mockClear();
+      store.getState().requestPermanentDelete();
+      await store.getState().confirmDeletion();
+      expect(onCompleted).not.toHaveBeenCalled();
+    });
   });
 });
