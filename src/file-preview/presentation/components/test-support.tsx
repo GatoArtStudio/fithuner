@@ -18,7 +18,11 @@ export function createFakeGateway(overrides: Partial<PreviewGateway> = {}): Prev
 
 export async function renderWithPreview(
   ui: ReactElement,
-  { gateway = createFakeGateway(), settings }: { gateway?: PreviewGateway; settings?: SettingsPatch } = {},
+  {
+    gateway = createFakeGateway(),
+    settings,
+    quickLookOpen = false,
+  }: { gateway?: PreviewGateway; settings?: SettingsPatch; quickLookOpen?: boolean } = {},
 ) {
   const settingsStore = createSettingsStore({
     gateway: {
@@ -29,6 +33,7 @@ export async function renderWithPreview(
   });
   if (settings) await settingsStore.getState().update(settings);
   const previewStore = createPreviewStore();
+  if (quickLookOpen) previewStore.getState().openQuickLook();
 
   const result = render(
     <SettingsProvider store={settingsStore}>

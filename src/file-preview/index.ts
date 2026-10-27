@@ -8,3 +8,5 @@ export { PreviewToggleButton } from "./presentation/components/PreviewToggleButt
 export { PreviewProvider } from "./presentation/context/PreviewContext";
 export { usePreviewLayout } from "./presentation/hooks/usePreviewLayout";
 export { usePreviewShortcuts } from "./presentation/hooks/usePreviewShortcuts";
+export { QuickLook } from "./presentation/components/QuickLook";
+export { usePreview } from "./presentation/context/PreviewContext";

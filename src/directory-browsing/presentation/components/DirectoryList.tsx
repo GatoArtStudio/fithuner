@@ -11,13 +11,9 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDragSource } from "../../../shared/drag-and-drop/useDragSource";
 import { Icon } from "../../../shared/icons/Icon";
 import type { FileEntry } from "../../domain/entities/file-entry";
-import {
-  fileExtension,
-  filterVisibleEntries,
-  sortEntries,
-  type SortKey,
-} from "../../domain/services/sort-entries";
+import { fileExtension, type SortKey } from "../../domain/services/sort-entries";
 import { useDirectoryBrowsing } from "../context/DirectoryBrowsingContext";
+import { useVisibleEntries } from "../hooks/useVisibleEntries";
 import { formatFileSize, formatModifiedDate } from "../formatters/formatters";
 import styles from "./DirectoryList.module.css";
 
@@ -46,6 +42,7 @@ interface DirectoryListProps {
   onContextMenu: (entry: FileEntry | null, position: ContextMenuPosition) => void;
   renderNameEditor?: (entry: FileEntry) => ReactNode;
   isEntryDimmed?: (entry: FileEntry) => boolean;
+  onQuickLook?: (entry: FileEntry) => void;
 }
 
 export function DirectoryList({
@@ -53,11 +50,11 @@ export function DirectoryList({
   onContextMenu,
   renderNameEditor,
   isEntryDimmed,
+  onQuickLook,
 }: DirectoryListProps) {
   const listing = useDirectoryBrowsing((state) => state.listing);
   const error = useDirectoryBrowsing((state) => state.error);
   const sort = useDirectoryBrowsing((state) => state.sort);
-  const showHidden = useDirectoryBrowsing((state) => state.showHidden);
   const selectedPaths = useDirectoryBrowsing((state) => state.selectedPaths);
   const toggleSort = useDirectoryBrowsing((state) => state.toggleSort);
   const selectOnly = useDirectoryBrowsing((state) => state.selectOnly);
@@ -67,10 +64,7 @@ export function DirectoryList({
   const beginDrag = useDragSource();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const visibleEntries = useMemo(
-    () => sortEntries(filterVisibleEntries(listing?.entries ?? [], showHidden), sort),
-    [listing, showHidden, sort],
-  );
+  const visibleEntries = useVisibleEntries();
   const selectedPathSet = useMemo(() => new Set(selectedPaths), [selectedPaths]);
 
   // TanStack Virtual returns unmemoizable functions; the compiler skipping this component is expected
@@ -154,6 +148,10 @@ export function DirectoryList({
       case "F10":
         if (!event.shiftKey) return;
         openContextMenuFromKeyboard(visibleEntries[currentIndex] ?? null);
+        break;
+      case " ":
+        if (!onQuickLook || currentIndex === -1) return;
+        onQuickLook(visibleEntries[currentIndex]);
         break;
       case "Escape":
         clearSelection();

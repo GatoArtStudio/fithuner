@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   PreviewPanel,
   PreviewProvider,
+  QuickLook,
+  usePreview,
   PreviewToggleButton,
   usePreviewLayout,
   usePreviewShortcuts,
@@ -18,8 +20,10 @@ import {
   DirectoryList,
   FolderStatusBar,
   ShowHiddenToggle,
+  useDirectoryBrowsing,
   useSelectedEntry,
   useSelectionCount,
+  useVisibleEntries,
   type FileEntry,
 } from "../directory-browsing";
 import {
@@ -90,6 +94,9 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       },
     [selectedEntry],
   );
+  const visibleEntries = useVisibleEntries();
+  const selectOnly = useDirectoryBrowsing((state) => state.selectOnly);
+  const openQuickLook = usePreview((state) => state.openQuickLook);
   usePreviewShortcuts(isSettingsOpen);
   useNavigationShortcuts(isSettingsOpen);
   useFileOperationShortcuts(isSettingsOpen);
@@ -116,6 +123,12 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
     void loadPlaces();
     void navigateTo(undefined);
   }, [loadPlaces, navigateTo]);
+
+  function stepQuickLook(delta: 1 | -1) {
+    const currentIndex = visibleEntries.findIndex((entry) => entry.path === selectedEntry?.path);
+    const next = visibleEntries[currentIndex + delta];
+    if (next) selectOnly(next.path);
+  }
 
   function handleOpenEntry(entry: FileEntry) {
     if (entry.kind === "directory") void navigateTo(entry.path);
@@ -148,6 +161,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
                 })
               }
               isEntryDimmed={(entry) => cutPaths.includes(entry.path)}
+            onQuickLook={previewLayout.isQuickLookEnabled ? () => openQuickLook() : undefined}
               renderNameEditor={(entry) =>
                 entry.path === renamingPath ? (
                   <InlineRenameInput initialName={entry.name} isDirectory={entry.kind === "directory"} />
@@ -168,6 +182,11 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       <EntryContextMenu renderExtraItems={renderClipboardMenuItems} />
       <DeleteConfirmationDialog />
       <ConflictDialog />
+      <QuickLook
+        target={previewTarget}
+        onStep={stepQuickLook}
+        onOpenExternally={(path) => void openEntry(path)}
+      />
       <TransferPanel />
       <ExternalDropOverlay />
       <DragPreview />

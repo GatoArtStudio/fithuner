@@ -4,6 +4,7 @@ import type { PreviewTarget } from "../../domain/entities/preview";
 import { PreviewBody } from "./PreviewBody";
 import { PreviewHeader } from "./PreviewHeader";
 import { PreviewMessage } from "./PreviewStates";
+import { PreviewSplitter } from "./PreviewSplitter";
 import styles from "./PreviewPanel.module.css";
 
 const SELECTION_DEBOUNCE_MS = 150;
@@ -15,7 +16,7 @@ interface PreviewPanelProps {
 }
 
 export function PreviewPanel({ target, selectionCount, onOpenExternally }: PreviewPanelProps) {
-  const { isPanelVisible, position, hidePanel } = usePreviewLayout();
+  const { isPanelVisible, position, sizePx, hidePanel, resizePanel } = usePreviewLayout();
   const debouncedTarget = useDebouncedValue(target, SELECTION_DEBOUNCE_MS);
 
   if (!isPanelVisible) return null;
@@ -24,6 +25,7 @@ export function PreviewPanel({ target, selectionCount, onOpenExternally }: Previ
 
   return (
     <aside className={`${styles.panel} ${position === "right" ? styles.onRight : styles.onBottom}`} aria-label="Preview">
+      <PreviewSplitter position={position} sizePx={sizePx} onResize={resizePanel} />
       {shownTarget ? (
         <>
           <PreviewHeader target={shownTarget} onOpenExternally={onOpenExternally} onClose={hidePanel} />
