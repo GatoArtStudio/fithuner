@@ -5,6 +5,7 @@ import type { PreviewDecision, PreviewKind, PreviewTarget } from "../../domain/e
 import { decidePreview } from "../../domain/services/decide-preview";
 import { usePreview } from "../context/PreviewContext";
 import { CsvPreview } from "./providers/CsvPreview";
+import { FolderPreview } from "./providers/FolderPreview";
 import { ImagePreview } from "./providers/ImagePreview";
 import { JsonPreview } from "./providers/JsonPreview";
 import { MediaPreview } from "./providers/MediaPreview";
@@ -13,6 +14,7 @@ import { TextPreview } from "./providers/TextPreview";
 import { PreviewAction, PreviewLoading, PreviewMessage } from "./PreviewStates";
 
 const MarkdownPreview = lazy(() => import("./providers/MarkdownPreview"));
+const PdfPreview = lazy(() => import("./providers/PdfPreview"));
 
 const KIND_LABELS: Record<PreviewKind, string> = {
   image: "images",
@@ -49,6 +51,14 @@ function renderProvider(kind: PreviewKind, props: ProviderProps) {
       return <JsonPreview {...props} />;
     case "csv":
       return <CsvPreview {...props} />;
+    case "pdf":
+      return (
+        <Suspense fallback={<PreviewLoading />}>
+          <PdfPreview {...props} />
+        </Suspense>
+      );
+    case "folder":
+      return <FolderPreview {...props} />;
     case "audio":
       return <MediaPreview {...props} media="audio" />;
     case "video":
