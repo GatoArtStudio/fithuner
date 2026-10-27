@@ -1,5 +1,7 @@
 export type { Pane } from "./domain/entities/pane";
 export type { Tab } from "./domain/entities/tab";
+export type { PaneLayout, WorkspaceLayout } from "./domain/entities/workspace-layout";
+export { layoutOf, parseWorkspaceLayout } from "./domain/services/workspace-layout";
 export type { Workspace } from "./domain/entities/workspace";
 export { activePaneOf, activeTabOf, isSplit, otherPaneOf } from "./domain/services/workspace-queries";
 export { createWorkspaceStore, selectActiveSession } from "./application/stores/workspace-store";
