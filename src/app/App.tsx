@@ -7,7 +7,6 @@ import {
 } from "../command-palette";
 import {
   SearchBar,
-  SearchProvider,
   SearchResults,
   SearchToggleButton,
   useSearch,
@@ -33,7 +32,6 @@ import {
   useFileClipboard,
 } from "../file-clipboard";
 import {
-  DirectoryBrowsingProvider,
   DirectoryList,
   FolderStatusBar,
   ShowHiddenToggle,
@@ -61,7 +59,6 @@ import {
 import {
   Breadcrumbs,
   NavigationControls,
-  NavigationProvider,
   PlacesProvider,
   Sidebar,
   useNavigation,
@@ -80,6 +77,7 @@ import { DragAndDropProvider } from "../shared/drag-and-drop/DragAndDropContext"
 import { DragPreview } from "../shared/drag-and-drop/DragPreview";
 import { ToastProvider } from "../shared/notifications/ToastContext";
 import { ToastViewport } from "../shared/notifications/ToastViewport";
+import { ActiveSession } from "./ActiveSession";
 import { composeApplication } from "./composition-root";
 import styles from "./App.module.css";
 
@@ -152,8 +150,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
 
   useEffect(() => {
     void loadPlaces();
-    void navigateTo(undefined);
-  }, [loadPlaces, navigateTo]);
+  }, [loadPlaces]);
 
   function parentFolderOf(match: SearchMatch): string {
     return match.path.slice(0, match.path.length - match.name.length).replace(/[\\/]$/, "") || "/";
@@ -277,12 +274,10 @@ export function App() {
     <ToastProvider store={application.toastStore}>
       <SettingsProvider store={application.settingsStore}>
       <CommandPaletteProvider store={application.commandPaletteStore}>
-      <SearchProvider store={application.searchStore}>
       <UpdatesProvider store={application.updatesStore}>
       <PreviewProvider store={application.previewStore} gateway={application.previewGateway}>
-      <DirectoryBrowsingProvider store={application.directoryBrowsingStore}>
+      <ActiveSession workspaceStore={application.workspaceStore}>
         <PlacesProvider store={application.placesStore}>
-        <NavigationProvider store={application.navigationStore}>
           <FileOperationsProvider store={application.fileOperationsStore}>
             <FileTransferProvider store={application.fileTransferStore}>
               <FileClipboardProvider store={application.fileClipboardStore}>
@@ -292,12 +287,10 @@ export function App() {
               </FileClipboardProvider>
             </FileTransferProvider>
           </FileOperationsProvider>
-        </NavigationProvider>
         </PlacesProvider>
-      </DirectoryBrowsingProvider>
+      </ActiveSession>
       </PreviewProvider>
       </UpdatesProvider>
-      </SearchProvider>
       </CommandPaletteProvider>
       </SettingsProvider>
     </ToastProvider>

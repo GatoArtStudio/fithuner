@@ -34,9 +34,13 @@ async function createStores() {
     refresh: async () => {},
     selectEntry: () => {},
   };
+  const searchStore = createSearchStore({
+    gateway: { startSearch: vi.fn().mockResolvedValue("s1"), cancelSearch: vi.fn(), subscribe: vi.fn() },
+    currentDirectoryPath: () => directoryBrowsingStore.getState().listing?.path ?? null,
+  });
+  const session = { directoryBrowsingStore, navigationStore, searchStore };
   const stores: PaletteStores = {
-    directoryBrowsingStore,
-    navigationStore,
+    activeSession: () => session,
     placesStore,
     fileOperationsStore: createFileOperationsStore({
       gateway: {
@@ -71,14 +75,10 @@ async function createStores() {
       shouldCheckOnStartup: () => true,
       shouldDownloadAutomatically: () => false,
     }),
-    searchStore: createSearchStore({
-      gateway: { startSearch: vi.fn().mockResolvedValue("s1"), cancelSearch: vi.fn(), subscribe: vi.fn() },
-      currentDirectoryPath: () => directoryBrowsingStore.getState().listing?.path ?? null,
-    }),
   };
   await placesStore.getState().load();
   await navigationStore.getState().navigateTo("/home/ana");
-  return stores;
+  return { ...stores, ...session };
 }
 
 const titles = (items: { title: string }[]) => items.map((item) => item.title);
