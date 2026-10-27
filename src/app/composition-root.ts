@@ -9,6 +9,7 @@ import { createFileTransferStore, isValidDropTarget, tauriFileTransferGateway } 
 import { createNavigationStore, tauriPlacesGateway } from "../navigation";
 import { createDragSessionStore } from "../shared/drag-and-drop/drag-session-store";
 import { findDropTargetAt } from "../shared/drag-and-drop/drop-targets";
+import { createPreviewStore, tauriPreviewGateway } from "../file-preview";
 import { createSettingsStore, tauriSettingsGateway } from "../settings";
 import { createToastStore } from "../shared/notifications/toast-store";
 
@@ -76,8 +77,12 @@ export function composeApplication() {
     return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
   }
 
+  const previewStore = createPreviewStore();
+
   return {
     toastStore,
+    previewStore,
+    previewGateway: tauriPreviewGateway,
     settingsStore,
     directoryBrowsingStore,
     navigationStore,

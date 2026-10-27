@@ -53,7 +53,7 @@ export function createSettingsStore({ gateway, notifyError }: SettingsDependenci
 
       load: async () => {
         try {
-          const loaded = await gateway.loadSettings();
+          const loaded = mergeSettings(DEFAULT_SETTINGS, await gateway.loadSettings());
           lastPersisted = loaded;
           set({ settings: loaded, isLoaded: true });
         } catch {

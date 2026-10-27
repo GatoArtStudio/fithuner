@@ -88,4 +88,14 @@ describe("settings store", () => {
     store.getState().closeSettings();
     expect(store.getState().isOpen).toBe(false);
   });
+
+  it("fills in settings missing from an older backend answer with the defaults", async () => {
+    const olderAnswer = { appearance: { theme: "dark" }, browsing: DEFAULT_SETTINGS.browsing } as AppSettings;
+    const { store } = setup({ loadSettings: vi.fn().mockResolvedValue(olderAnswer) });
+
+    await store.getState().load();
+
+    expect(store.getState().settings.appearance.theme).toBe("dark");
+    expect(store.getState().settings.preview).toEqual(DEFAULT_SETTINGS.preview);
+  });
 });
