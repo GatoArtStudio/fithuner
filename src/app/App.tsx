@@ -34,6 +34,14 @@ import {
   useNavigation,
   useNavigationShortcuts,
 } from "../navigation";
+import {
+  SettingsButton,
+  SettingsProvider,
+  SettingsView,
+  useApplyTheme,
+  useSettings,
+  useSettingsShortcut,
+} from "../settings";
 import { DragAndDropProvider } from "../shared/drag-and-drop/DragAndDropContext";
 import { DragPreview } from "../shared/drag-and-drop/DragPreview";
 import { ToastProvider } from "../shared/notifications/ToastContext";
@@ -54,9 +62,13 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   const cutPaths = useFileClipboard((state) => state.cutPaths);
   const isDialogOpen = useFileOperations((state) => state.pendingPermanentDeletePaths !== null);
   const renderClipboardMenuItems = useClipboardMenuItems();
-  useNavigationShortcuts();
-  useFileOperationShortcuts();
-  useClipboardShortcuts(isDialogOpen || renamingPath !== null);
+  const loadSettings = useSettings((state) => state.load);
+  const isSettingsOpen = useSettings((state) => state.isOpen);
+  useApplyTheme();
+  useSettingsShortcut();
+  useNavigationShortcuts(isSettingsOpen);
+  useFileOperationShortcuts(isSettingsOpen);
+  useClipboardShortcuts(isDialogOpen || renamingPath !== null || isSettingsOpen);
 
   useEffect(() => {
     let isDisposed = false;
@@ -72,6 +84,10 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   }, [connectBackendEvents]);
 
   useEffect(() => {
+    void loadSettings();
+  }, [loadSettings]);
+
+  useEffect(() => {
     void loadPlaces();
     void navigateTo(undefined);
   }, [loadPlaces, navigateTo]);
@@ -82,33 +98,36 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
   }
 
   return (
-    <div className={styles.shell}>
-      <Sidebar />
-      <main className={styles.main}>
-        <header className={styles.toolbar}>
-          <NavigationControls />
-          <Breadcrumbs />
-          <ShowHiddenToggle />
-        </header>
-        <div className={styles.content}>
-          <DirectoryList
-            onOpenEntry={handleOpenEntry}
-            onContextMenu={(entry, position) =>
-              openContextMenu({
-                target: entry && { path: entry.path, kind: entry.kind },
-                ...position,
-              })
-            }
-            isEntryDimmed={(entry) => cutPaths.includes(entry.path)}
-            renderNameEditor={(entry) =>
-              entry.path === renamingPath ? (
-                <InlineRenameInput initialName={entry.name} isDirectory={entry.kind === "directory"} />
-              ) : null
-            }
-          />
-        </div>
-        <FolderStatusBar />
-      </main>
+    <>
+      <div className={styles.shell} hidden={isSettingsOpen}>
+        <Sidebar footer={<SettingsButton />} />
+        <main className={styles.main}>
+          <header className={styles.toolbar}>
+            <NavigationControls />
+            <Breadcrumbs />
+            <ShowHiddenToggle />
+          </header>
+          <div className={styles.content}>
+            <DirectoryList
+              onOpenEntry={handleOpenEntry}
+              onContextMenu={(entry, position) =>
+                openContextMenu({
+                  target: entry && { path: entry.path, kind: entry.kind },
+                  ...position,
+                })
+              }
+              isEntryDimmed={(entry) => cutPaths.includes(entry.path)}
+              renderNameEditor={(entry) =>
+                entry.path === renamingPath ? (
+                  <InlineRenameInput initialName={entry.name} isDirectory={entry.kind === "directory"} />
+                ) : null
+              }
+            />
+          </div>
+          <FolderStatusBar />
+        </main>
+      </div>
+      {isSettingsOpen && <SettingsView />}
       <EntryContextMenu renderExtraItems={renderClipboardMenuItems} />
       <PermanentDeleteDialog />
       <ConflictDialog />
@@ -116,7 +135,7 @@ function Explorer({ connectBackendEvents }: ExplorerProps) {
       <ExternalDropOverlay />
       <DragPreview />
       <ToastViewport />
-    </div>
+    </>
   );
 }
 
@@ -125,6 +144,7 @@ export function App() {
 
   return (
     <ToastProvider store={application.toastStore}>
+      <SettingsProvider store={application.settingsStore}>
       <DirectoryBrowsingProvider store={application.directoryBrowsingStore}>
         <NavigationProvider store={application.navigationStore}>
           <FileOperationsProvider store={application.fileOperationsStore}>
@@ -138,6 +158,7 @@ export function App() {
           </FileOperationsProvider>
         </NavigationProvider>
       </DirectoryBrowsingProvider>
+      </SettingsProvider>
     </ToastProvider>
   );
 }

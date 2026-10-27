@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useDirectoryBrowsing } from "../../../directory-browsing";
 import { useNavigation } from "../context/NavigationContext";
 
-export function useNavigationShortcuts() {
+export function useNavigationShortcuts(isBlocked = false) {
   const goBack = useNavigation((state) => state.goBack);
   const goForward = useNavigation((state) => state.goForward);
   const navigateTo = useNavigation((state) => state.navigateTo);
@@ -11,6 +11,7 @@ export function useNavigationShortcuts() {
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (isBlocked) return;
       if (event.altKey && event.key === "ArrowLeft") goBack();
       else if (event.altKey && event.key === "ArrowRight") goForward();
       else if (event.altKey && event.key === "ArrowUp" && parentPath !== null) navigateTo(parentPath);
@@ -21,5 +22,5 @@ export function useNavigationShortcuts() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [goBack, goForward, navigateTo, parentPath, refresh]);
+  }, [goBack, goForward, navigateTo, parentPath, refresh, isBlocked]);
 }

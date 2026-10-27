@@ -8,10 +8,15 @@ import { createFileTransferStore, isValidDropTarget, tauriFileTransferGateway } 
 import { createNavigationStore, tauriPlacesGateway } from "../navigation";
 import { createDragSessionStore } from "../shared/drag-and-drop/drag-session-store";
 import { findDropTargetAt } from "../shared/drag-and-drop/drop-targets";
+import { createSettingsStore, tauriSettingsGateway } from "../settings";
 import { createToastStore } from "../shared/notifications/toast-store";
 
 export function composeApplication() {
   const toastStore = createToastStore();
+  const settingsStore = createSettingsStore({
+    gateway: tauriSettingsGateway,
+    notifyError: (message) => toastStore.getState().push(message, "error"),
+  });
   const directoryBrowsingStore = createDirectoryBrowsingStore(tauriDirectoryGateway);
   const navigationStore = createNavigationStore({
     placesGateway: tauriPlacesGateway,
@@ -69,6 +74,7 @@ export function composeApplication() {
 
   return {
     toastStore,
+    settingsStore,
     directoryBrowsingStore,
     navigationStore,
     fileOperationsStore,

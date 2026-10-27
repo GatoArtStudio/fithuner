@@ -1,9 +1,14 @@
+import type { ReactNode } from "react";
 import { useDirectoryBrowsing } from "../../../directory-browsing";
 import { Icon } from "../../../shared/icons/Icon";
 import { useNavigation } from "../context/NavigationContext";
 import styles from "./Sidebar.module.css";
 
-export function Sidebar() {
+interface SidebarProps {
+  footer?: ReactNode;
+}
+
+export function Sidebar({ footer }: SidebarProps) {
   const places = useNavigation((state) => state.places);
   const navigateTo = useNavigation((state) => state.navigateTo);
   const currentPath = useDirectoryBrowsing((state) => state.listing?.path ?? null);
@@ -23,6 +28,7 @@ export function Sidebar() {
           <span>{place.label}</span>
         </button>
       ))}
+      {footer && <div className={styles.footer}>{footer}</div>}
     </nav>
   );
 }

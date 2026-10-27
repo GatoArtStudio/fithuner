@@ -3,6 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(async (command: string) => {
+    if (command === "load_settings") {
+      return {
+        appearance: { theme: "system" },
+        browsing: { showHiddenFiles: false, confirmBeforeTrash: false },
+      };
+    }
     if (command === "list_places") {
       return [{ label: "Home", path: "/home/user", kind: "home" }];
     }
