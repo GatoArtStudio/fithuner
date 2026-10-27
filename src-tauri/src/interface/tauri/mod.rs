@@ -3,3 +3,4 @@ pub mod file_clipboard;
 pub mod file_operations;
 pub mod file_transfer;
 pub mod places;
+pub mod settings;
