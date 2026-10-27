@@ -24,6 +24,8 @@ pub struct AppearanceSettingsDto {
 pub struct BrowsingSettingsDto {
     show_hidden_files: bool,
     confirm_before_trash: bool,
+    restore_tabs_on_startup: bool,
+    watch_folders: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -55,6 +57,8 @@ impl From<AppSettings> for SettingsDto {
             browsing: BrowsingSettingsDto {
                 show_hidden_files: settings.browsing.show_hidden_files,
                 confirm_before_trash: settings.browsing.confirm_before_trash,
+                restore_tabs_on_startup: settings.browsing.restore_tabs_on_startup,
+                watch_folders: settings.browsing.watch_folders,
             },
             preview: settings.preview.into(),
             updates: UpdateSettingsDto {
@@ -78,6 +82,8 @@ impl From<SettingsDto> for AppSettings {
             browsing: BrowsingSettings {
                 show_hidden_files: dto.browsing.show_hidden_files,
                 confirm_before_trash: dto.browsing.confirm_before_trash,
+                restore_tabs_on_startup: dto.browsing.restore_tabs_on_startup,
+                watch_folders: dto.browsing.watch_folders,
             },
             preview: dto.preview.into(),
             updates: UpdateSettings {

@@ -25,6 +25,14 @@ mod tests {
     }
 
     #[test]
+    fn tabs_are_restored_and_folders_watched_by_default() {
+        let browsing = AppSettings::default().browsing;
+
+        assert!(browsing.restore_tabs_on_startup);
+        assert!(browsing.watch_folders);
+    }
+
+    #[test]
     fn updates_are_checked_at_startup_but_never_installed_automatically() {
         let updates = AppSettings::default().updates;
 

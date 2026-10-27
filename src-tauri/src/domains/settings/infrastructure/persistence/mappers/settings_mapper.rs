@@ -21,6 +21,8 @@ pub fn to_model(settings: &AppSettings) -> SettingsModel {
         browsing: BrowsingModel {
             show_hidden_files: settings.browsing.show_hidden_files,
             confirm_before_trash: settings.browsing.confirm_before_trash,
+            restore_tabs_on_startup: settings.browsing.restore_tabs_on_startup,
+            watch_folders: settings.browsing.watch_folders,
         },
         preview: preview_to_model(&settings.preview),
         updates: UpdatesModel {
@@ -42,6 +44,8 @@ pub fn to_domain(model: SettingsModel) -> AppSettings {
         browsing: BrowsingSettings {
             show_hidden_files: model.browsing.show_hidden_files,
             confirm_before_trash: model.browsing.confirm_before_trash,
+            restore_tabs_on_startup: model.browsing.restore_tabs_on_startup,
+            watch_folders: model.browsing.watch_folders,
         },
         preview: preview_to_domain(model.preview),
         updates: UpdateSettings {
@@ -65,6 +69,8 @@ mod tests {
             browsing: BrowsingSettings {
                 show_hidden_files: true,
                 confirm_before_trash: true,
+                restore_tabs_on_startup: false,
+                watch_folders: false,
             },
             preview: PreviewSettings {
                 quick_look_enabled: false,

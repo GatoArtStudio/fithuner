@@ -19,6 +19,18 @@ export function GeneralSection() {
         checked={browsing.confirmBeforeTrash}
         onChange={(confirmBeforeTrash) => void update({ browsing: { confirmBeforeTrash } })}
       />
+      <SettingToggle
+        label="Restore tabs on startup"
+        description="Reopen the tabs, folders and split view you had when you closed Fithuner."
+        checked={browsing.restoreTabsOnStartup}
+        onChange={(restoreTabsOnStartup) => void update({ browsing: { restoreTabsOnStartup } })}
+      />
+      <SettingToggle
+        label="Update folders automatically"
+        description="Show files created, renamed or deleted by other programs without refreshing."
+        checked={browsing.watchFolders}
+        onChange={(watchFolders) => void update({ browsing: { watchFolders } })}
+      />
     </>
   );
 }

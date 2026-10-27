@@ -6,7 +6,7 @@ describe("mergeSettings", () => {
   it("changes only the patched fields", () => {
     const merged = mergeSettings(DEFAULT_SETTINGS, { browsing: { showHiddenFiles: true } });
 
-    expect(merged.browsing).toEqual({ showHiddenFiles: true, confirmBeforeTrash: false });
+    expect(merged.browsing).toEqual({ ...DEFAULT_SETTINGS.browsing, showHiddenFiles: true });
     expect(merged.appearance).toEqual(DEFAULT_SETTINGS.appearance);
   });
 
